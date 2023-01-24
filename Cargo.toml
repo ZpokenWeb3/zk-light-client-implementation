@@ -1,0 +1,44 @@
+[workspace]
+members = ["plonky2_recursion", "plonky2_sig_hash"]
+[workspace.package]
+version = "0.1.0"
+authors = ["Zpoken"]
+description = "ZKP for NEAR"
+edition = "2021"
+
+[workspace.dependencies]
+plonky2 = { git = "https://github.com/polymerdao/plonky2", rev = "4cb0b48df1d227d5461a4c28ed025aaea64e2e62" }
+plonky2_util = { git = "https://github.com/polymerdao/plonky2", rev = "4cb0b48df1d227d5461a4c28ed025aaea64e2e62" }
+plonky2_field = { git = "https://github.com/polymerdao/plonky2", rev = "4cb0b48df1d227d5461a4c28ed025aaea64e2e62" }
+plonky2_u32 = { git = "https://github.com/polymerdao/plonky2", rev = "4cb0b48df1d227d5461a4c28ed025aaea64e2e62" }
+plonky2_ecdsa  = { git = "https://github.com/polymerdao/plonky2", rev = "4cb0b48df1d227d5461a4c28ed025aaea64e2e62" }
+plonky2_sha512  = { git = "https://github.com/polymerdao/plonky2-sha512", rev = "06d128e78ed8d29b21d58294b069e852c1866f8d" }
+curve25519-dalek = { git = "https://github.com/polymerdao/curve25519-dalek", rev = "ed02bb5a", features = ["default"] }
+
+anyhow = "1.0.40"
+keccak-hash = "0.8.0"
+itertools = "0.10.0"
+log = "0.4.14"
+sha2 = "0.10"
+env_logger = "0.9.0"
+rand = "0.8.4"
+rand_chacha = "0.3.1"
+num = { version = "0.4", default-features = false, features = ["alloc", "rand"] }
+rayon = "1.5.1"
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
+unroll = "0.1.5"
+static_assertions = "1.1.0"
+clap = { version = "4.0.29", features = ["derive"] }
+
+jemallocator = "0.5.0"
+
+ed25519-compact = "2.0.4"
+
+[profile.release]
+opt-level = 3
+
+[profile.bench]
+opt-level = 3
+
+[profile.test]
+opt-level = 1
