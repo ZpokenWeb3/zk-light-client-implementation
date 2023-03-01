@@ -32,6 +32,7 @@ pub fn prove_sha256(msg: &[u8]) -> Result<()> {
     for i in 0..expected_res.len() {
         pw.set_bool_target(targets.digest[i], expected_res[i]);
 
+//TODO! 
         match expected_res[i] {
             true => builder.assert_one(targets.digest[i].target),
             false => builder.assert_zero(targets.digest[i].target),

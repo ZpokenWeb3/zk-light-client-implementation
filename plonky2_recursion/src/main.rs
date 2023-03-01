@@ -7,20 +7,17 @@ use jemallocator::Jemalloc;
 static GLOBAL: Jemalloc = Jemalloc;
 
 use plonky2::field::goldilocks_field::GoldilocksField;
-
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
-use plonky2::plonk::circuit_data::{
-    CircuitConfig, CircuitData, VerifierCircuitTarget,
-};
+use plonky2::plonk::circuit_data::{CircuitConfig, CircuitData, VerifierCircuitTarget};
 
 use plonky2::plonk::config::PoseidonGoldilocksConfig;
 use plonky2::plonk::proof::ProofWithPublicInputs;
 
 use plonky2::util::timing::TimingTree;
 
-use plonky2_recursion::hash::circuit::{array_to_bits, make_circuits};
-use plonky2_recursion::sig::gadgets::eddsa::{fill_circuits, make_verify_circuits};
+use plonky2_ed25519::gadgets::eddsa::{ed25519_circuit, fill_circuits, EDDSATargets};
+use plonky2_sha256::circuit::{array_to_bits, sha256_circuit, Sha256Targets};
 
 use ed25519_compact::*;
 use log::{Level, LevelFilter};
@@ -40,7 +37,7 @@ fn make_genesis_circuit_and_proof(
     let len = genesis_block.len() * 8;
 
     let mut builder = CircuitBuilder::<F, D>::new(config);
-    let targets = make_circuits(&mut builder, len as u64);
+    let targets = sha256_circuit(&mut builder, len as u64);
     let mut pw = PartialWitness::new();
 
     for i in 0..len {
@@ -94,35 +91,36 @@ fn make_recursive_circuit_and_proof(
     // println!("pub input of pis {:?}", proof_with_pis.public_inputs);
 
     let mut recursive_builder = CircuitBuilder::<F, D>::new(config);
+    let mut pw = PartialWitness::new();
 
     //hash
     let block_bits = array_to_bits(block);
     let len = block.len() * 8;
-    let targets = make_circuits(&mut recursive_builder, len as u64);
-    let mut pw = PartialWitness::new();
+    assert_eq!(len, block_bits.len());
+    let hash_targets = sha256_circuit(&mut recursive_builder, (block.len() * 8) as u64);
 
-    //TODO make fiil cuircit for hash
+    //TODO make fill cuircit for hash
     for i in 0..len {
-        pw.set_bool_target(targets.message[i], block_bits[i]);
-        recursive_builder.register_public_input(targets.message[i].target);
+        pw.set_bool_target(hash_targets.message[i], block_bits[i]);
+        recursive_builder.register_public_input(hash_targets.message[i].target);
     }
 
-    let expected_res = array_to_bits(block_hash);
+     /*     let expected_res = array_to_bits(block_hash);
     for i in 0..expected_res.len() {
         if expected_res[i] {
             recursive_builder.assert_one(targets.digest[i].target);
         } else {
             recursive_builder.assert_zero(targets.digest[i].target);
         }
-    }
+    }*/
 
     //elliptic
-    let targets = make_verify_circuits(&mut recursive_builder, block.len());
-    fill_circuits::<F, D>(&mut pw, block, signature, public_key, &targets);
+    let ed_targets_1 = ed25519_circuit(&mut recursive_builder, block.len());
+
+    fill_circuits::<F, D>(&mut pw, block, signature, public_key, &ed_targets_1);
 
     //recursion
-    let proof_with_pis_target =
-        recursive_builder.add_virtual_proof_with_pis::<C>(&circuit_data.common);
+    let proof_with_pis_target = recursive_builder.add_virtual_proof_with_pis(&circuit_data.common);
 
     let verifier_circuit_target = VerifierCircuitTarget {
         constants_sigmas_cap: recursive_builder
@@ -159,6 +157,73 @@ fn make_recursive_circuit_and_proof(
     //println!("Recursive proof: {} bytes", proof_bytes.len());
 
     (data, proof)
+}
+
+fn build_circuit(
+    block_len: usize,
+    circuit_data: &CircuitData<F, C, D>,
+    proof_with_pis: &ProofWithPublicInputs<F, C, D>,
+) -> (
+    CircuitData<F, C, D>,
+    Sha256Targets,
+    EDDSATargets,
+    PartialWitness<F>,
+) {
+    //set (register) here open inputs if needed
+    let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::wide_ecc_config());
+
+    let hash_targets = sha256_circuit(&mut builder, (block_len * 8) as u64);
+    let ed_targets_1 = ed25519_circuit(&mut builder, block_len);
+
+    let proof_with_pis_target = builder.add_virtual_proof_with_pis(&circuit_data.common);
+
+    let verifier_circuit_target = VerifierCircuitTarget {
+        constants_sigmas_cap: builder
+            .add_virtual_cap(circuit_data.common.config.fri_config.cap_height),
+        circuit_digest: builder.add_virtual_hash(),
+    };
+
+    builder.verify_proof::<C>(
+        &proof_with_pis_target,
+        &verifier_circuit_target,
+        &circuit_data.common,
+    );
+
+    let timing = TimingTree::new("build", Level::Debug);
+    let circuit_data = builder.build::<C>();
+    timing.print();
+
+    let mut pw = PartialWitness::new();
+
+    pw.set_proof_with_pis_target(&proof_with_pis_target, proof_with_pis);
+    pw.set_verifier_data_target(&verifier_circuit_target, &circuit_data.verifier_only);
+
+    (circuit_data, hash_targets, ed_targets_1, pw)
+}
+
+fn proof_with_inputs(
+    block: &[u8],
+    public_key: &[u8],
+    signature: &[u8],
+    hash_targets: Sha256Targets,
+    ed_targets: EDDSATargets,
+    pw: &mut PartialWitness<F>,
+    circuit_data: CircuitData<F, C, D>,
+) -> ProofWithPublicInputs<F, C, D> {
+    let block_bits = array_to_bits(block);
+
+    for i in 0..block_bits.len() {
+        pw.set_bool_target(hash_targets.message[i], block_bits[i]);
+        pw.set_bool_target(hash_targets.digest[i], block_bits[i]);
+    }
+
+    fill_circuits::<F, D>(pw, block, signature, public_key, &ed_targets);
+
+    let timing = TimingTree::new("prove", Level::Debug);
+    let proof = circuit_data.prove(pw.to_owned()).unwrap();
+    timing.print();
+
+    proof
 }
 
 fn create_and_prove(
@@ -236,7 +301,18 @@ fn main() {
         &genesis_proof_with_pis,
     );
 
-    for block_number in 2..=10 {
+    for block_number in 2..=3 {
+        (block_circuit_data, block_proof_with_pis, block_hash) = create_and_prove(
+            &mut hasher,
+            &config,
+            block_number.to_string().as_bytes(),
+            &block_hash,
+            &block_circuit_data,
+            &block_proof_with_pis,
+        );
+    }
+
+    for block_number in 2..=3 {
         (block_circuit_data, block_proof_with_pis, block_hash) = create_and_prove(
             &mut hasher,
             &config,

@@ -1,5 +1,5 @@
 [workspace]
-members = ["plonky2_recursion", "plonky2_sig_hash"]
+members = ["plonky2_recursion", "plonky2_sig_hash", "plonky2_ed25519", "plonky2_sha256", "plonky2_sha512"]
 [workspace.package]
 version = "0.1.0"
 authors = ["Zpoken"]
