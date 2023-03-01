@@ -1,10 +1,10 @@
 use std::borrow::Borrow;
 
 use itertools::Itertools;
+use plonky2::field::extension::Extendable;
+use plonky2::field::types::Field;
 use plonky2::gates::arithmetic_base::ArithmeticGate;
 use plonky2::gates::arithmetic_extension::ArithmeticExtensionGate;
-use plonky2_field::extension::Extendable;
-use plonky2_field::types::Field;
 
 use plonky2::gates::base_sum::BaseSumGate;
 use plonky2::hash::hash_types::RichField;
@@ -125,12 +125,12 @@ mod tests {
     use anyhow::Result;
     use rand::{thread_rng, Rng};
 
-    use crate::hash::split_base::CircuitBuilderSplit;
+    use crate::split_base::CircuitBuilderSplit;
+    use plonky2::field::types::Field;
     use plonky2::iop::witness::PartialWitness;
     use plonky2::plonk::circuit_builder::CircuitBuilder;
     use plonky2::plonk::circuit_data::CircuitConfig;
     use plonky2::plonk::config::{GenericConfig, PoseidonGoldilocksConfig};
-    use plonky2_field::types::Field;
 
     #[test]
     fn test_split_base() -> Result<()> {

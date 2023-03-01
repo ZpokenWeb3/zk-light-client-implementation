@@ -12,9 +12,8 @@ use plonky2::util::timing::TimingTree;
 use plonky2_field::extension::Extendable;
 use sha2::{Digest, Sha256};
 
-use crate::gadgets::eddsa::ed25519_circuit;
-use crate::gadgets::eddsa::fill_circuits;
-use crate::hash::sha256::{array_to_bits, sha256_circuit};
+use plonky2_ed25519::gadgets::eddsa::{ed25519_circuit, fill_circuits};
+use plonky2_sha256::circuit::{array_to_bits, sha256_circuit};
 
 const D: usize = 2;
 type C = PoseidonGoldilocksConfig;
@@ -145,55 +144,60 @@ Aggregation of two proofs
 */
 pub fn aggregation_two(
     (data1, proof1): (&CircuitData<F, C, 2>, &ProofWithPublicInputs<F, C, D>),
-    (data2, proof2): (&CircuitData<F, C, 2>, &ProofWithPublicInputs<F, C, D>),
+    data_proof_2: Option<(&CircuitData<F, C, 2>, &ProofWithPublicInputs<F, C, D>)>,
 ) -> Result<(CircuitData<F, C, D>, ProofWithPublicInputs<F, C, D>)> {
-    verification_proofs((data1, proof1), (data2, proof2))?;
+    verification((data1, proof1))?;
     let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::standard_recursion_config());
-    let proof_with_pis_target_1 = builder.add_virtual_proof_with_pis::<C>(&data1.common);
-    let proof_with_pis_target_2 = builder.add_virtual_proof_with_pis::<C>(&data2.common);
+    let proof_with_pis_target_1 = builder.add_virtual_proof_with_pis(&data1.common);
     // dynamic setup for verifier
     let verifier_circuit_target_1 = VerifierCircuitTarget {
         // data.common is static setup for verifier
         constants_sigmas_cap: builder.add_virtual_cap(data1.common.config.fri_config.cap_height),
         circuit_digest: builder.add_virtual_hash(),
     };
-    let verifier_circuit_target_2 = VerifierCircuitTarget {
-        constants_sigmas_cap: builder.add_virtual_cap(data2.common.config.fri_config.cap_height),
-        circuit_digest: builder.add_virtual_hash(),
-    };
     let mut pw = PartialWitness::new();
     pw.set_proof_with_pis_target(&proof_with_pis_target_1, proof1);
-    pw.set_proof_with_pis_target(&proof_with_pis_target_2, proof2);
     pw.set_cap_target(
         &verifier_circuit_target_1.constants_sigmas_cap,
         &data1.verifier_only.constants_sigmas_cap,
     );
-    pw.set_cap_target(
-        &verifier_circuit_target_2.constants_sigmas_cap,
-        &data2.verifier_only.constants_sigmas_cap,
-    );
     pw.set_hash_target(
         verifier_circuit_target_1.circuit_digest,
         data1.verifier_only.circuit_digest,
-    );
-    pw.set_hash_target(
-        verifier_circuit_target_2.circuit_digest,
-        data2.verifier_only.circuit_digest,
     );
     builder.verify_proof::<C>(
         &proof_with_pis_target_1,
         &verifier_circuit_target_1,
         &data1.common,
     );
-    builder.verify_proof::<C>(
-        &proof_with_pis_target_2,
-        &verifier_circuit_target_2,
-        &data2.common,
-    );
+    if data_proof_2.is_some() {
+        verification((data_proof_2.unwrap().0, data_proof_2.unwrap().1))?;
+        let proof_with_pis_target_2 =
+            builder.add_virtual_proof_with_pis(&data_proof_2.unwrap().0.common);
+        let verifier_circuit_target_2 = VerifierCircuitTarget {
+            constants_sigmas_cap: builder
+                .add_virtual_cap(data_proof_2.unwrap().0.common.config.fri_config.cap_height),
+            circuit_digest: builder.add_virtual_hash(),
+        };
+        pw.set_proof_with_pis_target(&proof_with_pis_target_2, data_proof_2.unwrap().1);
+        pw.set_cap_target(
+            &verifier_circuit_target_2.constants_sigmas_cap,
+            &data_proof_2.unwrap().0.verifier_only.constants_sigmas_cap,
+        );
+        pw.set_hash_target(
+            verifier_circuit_target_2.circuit_digest,
+            data_proof_2.unwrap().0.verifier_only.circuit_digest,
+        );
+        builder.verify_proof::<C>(
+            &proof_with_pis_target_2,
+            &verifier_circuit_target_2,
+            &data_proof_2.unwrap().0.common,
+        );
+    }
     // create common circuit for two proofs
     let data_new = builder.build::<C>();
     let timing = TimingTree::new("prove", Level::Debug);
-    let proof_new = data_new.prove(pw).unwrap();
+    let proof_new = data_new.prove(pw)?;
     timing.print();
     Ok((data_new, proof_new))
 }
@@ -205,12 +209,13 @@ pub fn aggregation_three(
     (data2, proof2): (&CircuitData<F, C, 2>, &ProofWithPublicInputs<F, C, D>),
     (data3, proof3): (&CircuitData<F, C, 2>, &ProofWithPublicInputs<F, C, D>),
 ) -> Result<(CircuitData<F, C, D>, ProofWithPublicInputs<F, C, D>)> {
-    verification_proofs((data1, proof1), (data2, proof2))?;
+    verification((data1, proof1))?;
+    verification((data2, proof2))?;
     verification((data3, proof3))?;
     let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::standard_recursion_config());
-    let proof_with_pis_target_1 = builder.add_virtual_proof_with_pis::<C>(&data1.common);
-    let proof_with_pis_target_2 = builder.add_virtual_proof_with_pis::<C>(&data2.common);
-    let proof_with_pis_target_3 = builder.add_virtual_proof_with_pis::<C>(&data3.common);
+    let proof_with_pis_target_1 = builder.add_virtual_proof_with_pis(&data1.common);
+    let proof_with_pis_target_2 = builder.add_virtual_proof_with_pis(&data2.common);
+    let proof_with_pis_target_3 = builder.add_virtual_proof_with_pis(&data3.common);
     // dynamic setup for verifier
     let verifier_circuit_target_1 = VerifierCircuitTarget {
         // data.common is static setup for verifier

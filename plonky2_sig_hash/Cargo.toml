@@ -1,5 +1,5 @@
 [package]
-name = "plonky2_sig_hash"
+name = "plonky2_test_case4"
 version.workspace = true
 authors.workspace = true
 description.workspace = true
@@ -10,13 +10,13 @@ edition.workspace = true
 
 [dependencies]
 plonky2.workspace = true
+plonky2_ecdsa.workspace = true
 plonky2_util.workspace = true
 plonky2_field.workspace = true
 plonky2_u32.workspace = true
-plonky2_ecdsa.workspace = true
-
-plonky2_sha512 = { git = "https://github.com/polymerdao/plonky2-sha512", rev = "6504a307448fdcc8c2daf000150a1f5691a4f8ef" }
-curve25519-dalek = { git = "https://github.com/polymerdao/curve25519-dalek", rev = "ed02bb5a", features = ["default"] }
+plonky2_sha256.workspace = true
+plonky2_sha512.workspace = true
+plonky2_ed25519.workspace = true
 
 anyhow.workspace = true
 keccak-hash.workspace = true
@@ -25,15 +25,15 @@ log.workspace = true
 sha2.workspace = true
 env_logger.workspace = true
 rand.workspace = true
+rayon.workspace = true
+rand_chacha.workspace = true
+unroll.workspace = true
+static_assertions.workspace = true
+curve25519-dalek.workspace = true
+ed25519-compact.workspace = true
+
+jemallocator.workspace = true
 
 num = { version = "0.4", default-features = false, features = ["alloc", "rand"] }
-rayon = "1.5.1"
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"] }
-rand_chacha = "0.3.1"
-unroll = "0.1.5"
-static_assertions = "1.1.0"
 clap = { version = "4.0.29", features = ["derive"] }
-
-[dependencies.ed25519-dalek]
-version = "1"
-

@@ -1,10 +1,8 @@
+use plonky2::field::extension::Extendable;
 use plonky2::hash::hash_types::RichField;
 use plonky2::iop::target::BoolTarget;
 use plonky2::plonk::circuit_builder::CircuitBuilder;
-use plonky2_field::extension::Extendable;
 use plonky2_u32::gadgets::arithmetic_u32::{CircuitBuilderU32, U32Target};
-
-use super::split_base::CircuitBuilderSplit;
 
 #[rustfmt::skip]
 pub const H256: [u32; 8] = [
@@ -408,7 +406,7 @@ mod tests {
     use plonky2::plonk::config::{GenericConfig, PoseidonGoldilocksConfig};
     use rand::Rng;
 
-    use crate::hash::sha256::{array_to_bits, sha256_circuit};
+    use crate::circuit::{array_to_bits, sha256_circuit};
 
     const EXPECTED_RES: [u8; 256] = [
         0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0,

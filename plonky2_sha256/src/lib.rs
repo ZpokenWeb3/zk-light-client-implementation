@@ -1,2 +1,2 @@
-pub mod sha256;
+pub mod circuit;
 pub mod split_base;
