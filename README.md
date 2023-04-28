@@ -6,13 +6,20 @@ This project requires using the nightly Rust toolchain, which can be used by def
 ```
 rustup default nightly
 ```
+## **Decription**
+
+In our current scheme we create a chain of blocks: epoch and ordinary.
+
+We use the epoch block structure from the NEAR protocol.
+
+In the current implementation we recursively prove the computational integrity of only epoch blocks. These proofs contain only proofs for the hash of epoch blocks.
+
+This is a simplified version of the proving system, where we will additionally prove signatures (of the block producer & validators) for epoch blocks and the whole set of proofs (hash, producer ‘s & validators’ signatures) for ordinary blocks.
 
 ## **How to run**
 ```
-cargo run --release --package plonky2_sig_hash
 cargo run --release --package plonky2_recursion
 ```
-Here presented 2 approaches for proofs. The first one is recursion and the second one is composition (or aggregation).
 
 ## **Results**
 ### Time for the first 10 blocks recursion proofs
