@@ -7,12 +7,36 @@ This project requires using the nightly Rust toolchain, which can be used by def
 rustup default nightly
 ```
 
-To run binaries use:
+## **How to run**
 ```
 cargo run --release --package plonky2_sig_hash
 cargo run --release --package plonky2_recursion
 ```
+Here presented 2 approaches for proofs. The first one is recursion and the second one is composition (or aggregation).
 
+## **Results**
+### Time for the first 10 blocks recursion proofs
+Block number |build, s	| prove, s |	verify, s
+---|---|---|---
+1|	2.5633|	4.6440|	0.0070
+2|	2.0640|	5.1424|	0.0076
+3|	2.4430|	4.8360|	0.0071
+4|	2.0789|	4.3056|	0.0076
+5|	2.1833|	4.4122|	0.0069
+6|	2.1611|	4.4126|	0.0071
+7|	2.1334|	4.1623|	0.0071
+8|	2.1054|	4.2416|	0.0070
+9|	2.1219|	4.1295|	0.0072
+avg|	2.2060|	4.4762|	0.0072
+
+### Total time for recursion proofs
+Block quantity |build + prove +	verify, s (h : m : s)
+---|---:
+1|	6 (00:00:06)
+10|	68 (00:01:08)
+1000|	687 (00:11:27)
+10000|	6934 (01:55:34)
+42000 (epoch)|	70223 (19:30:23)
 
 ## **Core Concept**
 
