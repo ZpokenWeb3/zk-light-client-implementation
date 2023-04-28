@@ -1,4 +1,4 @@
-# zkp for chain state
+## This is implementation for Near state based on proving headers of epoch blocks
 
 ## **Prerecusites**
 
