@@ -1,21 +1,29 @@
 ## This is implementation for Near state based on proving headers of epoch blocks
 
+## **Decription**
+
+In our current scheme we create a chain of epoch blocks.
+
+We use the epoch block structure from the NEAR protocol.
+
+In the current implementation we recursively prove the computational integrity of only epoch blocks. These proofs contain only proofs for the hash of epoch blocks.
+
+The figure below shows the proving scheme, which contains:
+- Bi are the epoch blocks;
+- H(Bi) are the of the epoch blocks to be proved;
+- C.S.P is the proving algorithm, where C is a computational scheme Ci(Xi, Wi), (i = 0...n-1) of the verification algorithm V (hash verification), S are the public settings (Spi, Svi) = S(Ci(Xi, Wi)), (i = 1...n), where Spi are public prover settings, Svi are public verifier settings, P is a generator of a proof of computational integrity.
+- ∏i is a proof, which is verified for each block and provided for the proof generation of the next block in a chain to make a recursively verified chain of proofs.
+
+
+
+This is a simplified version of the proving system, where we will additionally prove signatures (of the block producer & validators) for epoch blocks and the whole set of proofs (hash, producer ‘s & validators’ signatures) for ordinary blocks.
+
 ## **Prerecusites**
 
 This project requires using the nightly Rust toolchain, which can be used by default in this way:
 ```
 rustup default nightly
 ```
-## **Decription**
-
-In our current scheme we create a chain of blocks: epoch and ordinary.
-
-We use the epoch block structure from the NEAR protocol.
-
-In the current implementation we recursively prove the computational integrity of only epoch blocks. These proofs contain only proofs for the hash of epoch blocks.
-
-This is a simplified version of the proving system, where we will additionally prove signatures (of the block producer & validators) for epoch blocks and the whole set of proofs (hash, producer ‘s & validators’ signatures) for ordinary blocks.
-
 ## **How to run**
 ```
 cargo run --release --package plonky2_recursion
