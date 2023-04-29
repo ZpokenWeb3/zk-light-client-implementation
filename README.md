@@ -11,7 +11,7 @@ In the current implementation we recursively prove the computational integrity o
 The figure below shows the proving scheme, which contains:
 - Bi are the epoch blocks;
 - H(Bi) are the of the epoch blocks to be proved;
-- C.S.P is the proving algorithm, where C is a computational scheme Ci(Xi, Wi), (i = 0...n-1) of the verification algorithm V (hash verification), S are the public settings (Spi, Svi) = S(Ci(Xi, Wi)), (i = 1...n), where Spi are public prover settings, Xi and Wi are private inputs and witnesses respectively, Svi are public verifier settings, P is a generator of a proof of computational integrity;
+- C.S.P is the proving algorithm, where C is a computational scheme Ci(Xi, Wi), (i = 0...n-1) of the verification algorithm V (hash verification), S are the public settings (Spi, Svi) = S(Ci(Xi, Wi)), (i = 1...n), where Spi are public prover settings, Svi are public verifier settings, Xi and Wi are private inputs and witnesses respectively, P is a generator of a proof of computational integrity;
 - ∏i is a proof, which is verified for each block and provided for the proof generation of the next block in a chain to make a recursively verified chain of proofs.
 
 ![proving epoch blocks](https://github.com/ZpokenWeb3/zk-light-client-implementation/blob/main/schemes/prove_epoch_blocks.png)
