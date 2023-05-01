@@ -1,4 +1,4 @@
-## This is implementation for Near state based on proving headers of epoch blocks
+## This is implementation of Near Protocol zk light client based on proving headers of epoch blocks
 
 ## **Decription**
 
