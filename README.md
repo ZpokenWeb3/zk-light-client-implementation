@@ -26,7 +26,8 @@ rustup default nightly
 ```
 ## **How to run**
 ```
-cargo run --release --package plonky2_recursion
+cd prover
+cargo run --release
 ```
 
 ## **Results**
