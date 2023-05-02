@@ -31,6 +31,7 @@ pub const K256: [u32; 64] = [
     0x90BEFFFA, 0xA4506CEB, 0xBEF9A3F7, 0xC67178F2
 ];
 
+#[derive(Debug, Clone)]
 pub struct Sha256Targets {
     pub message: Vec<BoolTarget>,
     pub digest: Vec<BoolTarget>,
@@ -276,7 +277,7 @@ fn add_u32<F: RichField + Extendable<D>, const D: usize>(
 // Bits:      msg            | 100...000 |    L
 pub fn sha256_circuit<F: RichField + Extendable<D>, const D: usize>(
     builder: &mut CircuitBuilder<F, D>,
-    msg_len_in_bits: u64,
+    msg_len_in_bits: usize,
 ) -> Sha256Targets {
     let mut message = Vec::new();
     let mut digest = Vec::new();
@@ -433,7 +434,7 @@ mod tests {
         type C = PoseidonGoldilocksConfig;
         type F = <C as GenericConfig<D>>::F;
         let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::standard_recursion_config());
-        let targets = sha256_circuit(&mut builder, len as u64);
+        let targets = sha256_circuit(&mut builder, len);
         let mut pw = PartialWitness::new();
 
         for i in 0..len {
@@ -468,7 +469,7 @@ mod tests {
         type C = PoseidonGoldilocksConfig;
         type F = <C as GenericConfig<D>>::F;
         let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::standard_recursion_config());
-        let targets = sha256_circuit(&mut builder, len as u64);
+        let targets = sha256_circuit(&mut builder, len);
         let mut pw = PartialWitness::new();
 
         for i in 0..len {

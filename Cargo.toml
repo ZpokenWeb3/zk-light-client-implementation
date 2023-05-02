@@ -1,5 +1,5 @@
 [workspace]
-members = ["plonky2_recursion", "plonky2_sig_hash", "plonky2_ed25519", "plonky2_sha256", "plonky2_sha512"]
+members = ["prover", "plonky2_ed25519", "plonky2_sha256", "plonky2_sha512"]
 [workspace.package]
 version = "0.1.0"
 authors = ["Zpoken"]
@@ -7,14 +7,17 @@ description = "ZKP for NEAR"
 edition = "2021"
 
 [workspace.dependencies]
-plonky2 = { git = "https://github.com/tikhono/plonky2", rev = "d1bc376b85abd2d9952da5b26ec1f45f3dc11985" }
-plonky2_util = { git = "https://github.com/tikhono/plonky2", rev = "d1bc376b85abd2d9952da5b26ec1f45f3dc11985" }
-plonky2_field = { git = "https://github.com/tikhono/plonky2", rev = "d1bc376b85abd2d9952da5b26ec1f45f3dc11985" }
-plonky2_u32 = { git = "https://github.com/tikhono/plonky2", rev = "d1bc376b85abd2d9952da5b26ec1f45f3dc11985" }
-plonky2_ecdsa  = { git = "https://github.com/tikhono/plonky2", rev = "d1bc376b85abd2d9952da5b26ec1f45f3dc11985" }
+plonky2 = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
+plonky2_util = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
+plonky2_field = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
+plonky2_u32 = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
+plonky2_ecdsa  = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
 plonky2_sha256 = { path = "./plonky2_sha256" }
 plonky2_sha512 = { path = "./plonky2_sha512" }
 plonky2_ed25519 = { path = "./plonky2_ed25519" }
+
+near-primitives = { git = "https://github.com/tikhono/nearcore", branch = "main" }
+near-crypto = { git = "https://github.com/tikhono/nearcore", branch = "main" }
 
 curve25519-dalek = { git = "https://github.com/tikhono/curve25519-dalek", rev = "c87a7edfbc5694a581ef30e39673622fabe0c7c5" }
 anyhow = "1.0.40"

@@ -25,7 +25,7 @@ use plonky2::util::timing::TimingTree;
 use plonky2_ed25519::curve::eddsa::{
     SAMPLE_MSG1, SAMPLE_MSG2, SAMPLE_PK1, SAMPLE_SIG1, SAMPLE_SIG2,
 };
-use plonky2_ed25519::gadgets::eddsa::{ed25519_circuit, fill_circuits};
+use plonky2_ed25519::gadgets::eddsa::{ed25519_circuit, fill_ecdsa_targets};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -46,9 +46,9 @@ where
 {
     let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::wide_ecc_config());
 
-    let targets = ed25519_circuit(&mut builder, msg.len());
+    let targets = ed25519_circuit(&mut builder, msg.len() * 8);
     let mut pw = PartialWitness::new();
-    fill_circuits::<F, D>(&mut pw, msg, sigv, pkv, &targets);
+    fill_ecdsa_targets::<F, D>(&mut pw, msg, sigv, pkv, &targets);
 
     println!(
         "Constructing inner proof with {} gates",

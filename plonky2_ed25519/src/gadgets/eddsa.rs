@@ -12,6 +12,7 @@ use crate::gadgets::curve_fixed_base::fixed_base_curve_mul_circuit;
 use crate::gadgets::curve_windowed_mul::CircuitBuilderWindowedMul;
 use crate::gadgets::nonnative::CircuitBuilderNonNative;
 
+#[derive(Debug, Clone)]
 pub struct EDDSATargets {
     pub msg: Vec<BoolTarget>,
     pub sig: Vec<BoolTarget>,
@@ -33,7 +34,7 @@ pub fn ed25519_circuit<F: RichField + Extendable<D>, const D: usize>(
     builder: &mut CircuitBuilder<F, D>,
     msg_len: usize,
 ) -> EDDSATargets {
-    let msg_len_in_bits = msg_len * 8;
+    let msg_len_in_bits = msg_len;
     let sha512_msg_len = msg_len_in_bits + 512;
     let sha512 = sha256_circuit(builder, sha512_msg_len as u128);
 
@@ -82,7 +83,7 @@ pub fn ed25519_circuit<F: RichField + Extendable<D>, const D: usize>(
     return EDDSATargets { msg, sig, pk };
 }
 
-pub fn fill_circuits<F: RichField + Extendable<D>, const D: usize>(
+pub fn fill_ecdsa_targets<F: RichField + Extendable<D>, const D: usize>(
     pw: &mut PartialWitness<F>,
     msg: &[u8],
     sig: &[u8],
@@ -124,7 +125,7 @@ mod tests {
     use rand::Rng;
 
     use crate::curve::eddsa::{SAMPLE_MSG1, SAMPLE_PK1, SAMPLE_SIG1};
-    use crate::gadgets::eddsa::{ed25519_circuit, fill_circuits};
+    use crate::gadgets::eddsa::{ed25519_circuit, fill_ecdsa_targets};
 
     fn test_eddsa_circuit_with_config(config: CircuitConfig) -> Result<()> {
         const D: usize = 2;
@@ -134,9 +135,9 @@ mod tests {
         let mut pw = PartialWitness::new();
         let mut builder = CircuitBuilder::<F, D>::new(config);
 
-        let targets = ed25519_circuit(&mut builder, SAMPLE_MSG1.len());
+        let targets = ed25519_circuit(&mut builder, SAMPLE_MSG1.len() * 8);
 
-        fill_circuits::<F, D>(
+        fill_ecdsa_targets::<F, D>(
             &mut pw,
             SAMPLE_MSG1.as_bytes(),
             SAMPLE_SIG1.as_slice(),
@@ -158,14 +159,14 @@ mod tests {
         let mut pw = PartialWitness::new();
         let mut builder = CircuitBuilder::<F, D>::new(config);
 
-        let targets = ed25519_circuit(&mut builder, SAMPLE_MSG1.len());
+        let targets = ed25519_circuit(&mut builder, SAMPLE_MSG1.len() * 8);
 
         let mut rng = rand::thread_rng();
         let rnd_idx = rng.gen_range(0..64);
         let mut sig = SAMPLE_SIG1.clone();
         let rnd_value = rng.gen_range(1..=255);
         sig[rnd_idx] += rnd_value;
-        fill_circuits::<F, D>(
+        fill_ecdsa_targets::<F, D>(
             &mut pw,
             SAMPLE_MSG1.as_bytes(),
             sig.as_slice(),

@@ -15,8 +15,7 @@ plonky2_u32.workspace = true
 plonky2_ecdsa.workspace = true
 
 plonky2_sha512.workspace = true
-
-curve25519-dalek = { git = "https://github.com/tikhono/curve25519-dalek", rev = "c87a7edfbc5694a581ef30e39673622fabe0c7c5" }
+curve25519-dalek.workspace = true
 
 anyhow.workspace = true
 keccak-hash.workspace = true
