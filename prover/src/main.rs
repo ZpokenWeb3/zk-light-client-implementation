@@ -273,7 +273,7 @@ fn main() {
     {
         //Sequential computation
         //Change number of blocks to process from 1 to 100 in .take().
-        let chain = chain.iter().take(10).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
+        let chain = chain.iter().take(5).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
         let mut cached_circuits = HashMap::new();
         let mut proofs = Vec::new();
 
