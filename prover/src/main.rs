@@ -112,16 +112,11 @@ fn create_and_prove(
 
     let (block_circuit_data, sha256_targets) = get_sha256_circuit(block.len(), cached_circuits);
 
-    let block_proof_with_pis =
-        proof_with_inputs(&block, sha256_targets, &block_circuit_data);
+    let block_proof_with_pis = proof_with_inputs(&block, sha256_targets, &block_circuit_data);
 
-    //let proof_bytes = block_proof_with_pis.to_bytes();
-    //println!("Recursive proof: {} bytes", proof_bytes.len());
-    //let timing = TimingTree::new("verify", Level::Debug);
     block_circuit_data
         .verify(block_proof_with_pis.clone())
         .unwrap();
-    //timing.print();
 
     (block_proof_with_pis, block_circuit_data)
 }
@@ -132,9 +127,6 @@ fn compose(
     proof_with_pis_2: &ProofWithPublicInputs<F, C, D>,
     circuit_data_2: &CircuitData<F, C, D>,
 ) -> (ProofWithPublicInputs<F, C, D>, CircuitData<F, C, D>) {
-    //let res = circuit_data_1.verify(proof_with_pis_1);
-    //let res = circuit_data_1.verify(proof_with_pis_1);
-
     let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::standard_recursion_config());
     let proof_with_pis_target_1 = builder.add_virtual_proof_with_pis(&circuit_data_1.common);
     let proof_with_pis_target_2 = builder.add_virtual_proof_with_pis(&circuit_data_2.common);
@@ -182,9 +174,7 @@ fn compose(
     );
 
     let circuit_data = builder.build::<C>();
-    //let timing = TimingTree::new("prove", Level::Debug);
     let proof = circuit_data.prove(pw).unwrap();
-    //timing.print();
     (proof, circuit_data)
 }
 
@@ -278,47 +268,58 @@ fn main() {
 
     let mut logger = env_logger::Builder::from_default_env();
     logger.format_timestamp(None);
-    logger.filter_level(LevelFilter::Debug);
+    logger.filter_level(LevelFilter::Info);
     logger.try_init().unwrap();
 
-    let mut proofs = Vec::new();
-    let timing = TimingTree::new("Build proofs sequential", Level::Debug);
-    for block in chain {
-        proofs.push(create_and_prove(&block, &mut hasher, &mut cached_circuits));
+    {
+        //Sequential computation
+        //Change number of blocks to process from 1 to 100 in .take().
+        let chain = chain.iter().take(10).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
+
+        let mut proofs = Vec::new();
+
+        let timing = TimingTree::new("Build proofs sequential", Level::Info);
+        for block in &chain {
+            proofs.push(create_and_prove(&block, &mut hasher, &mut cached_circuits));
+        }
+        timing.print();
+
+        let timing = TimingTree::new("Compose sequential", Level::Info);
+        let (proof, data) = proofs
+            .clone()
+            .into_iter()
+            .reduce(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
+            .unwrap();
+        timing.print();
+
+        let proof_bytes = proof.to_bytes();
+        println!("Final proof size: {} bytes", proof_bytes.len());
+        data.verify(proof).unwrap();
     }
-    timing.print();
 
-    /*    let timing = TimingTree::new("Build proofs sequential", Level::Debug);
-    for i in 0..10 {
-        proofs.push(create_and_prove(
-            &chain[i],
-            &mut hasher,
-            &mut cached_circuits,
-        ));
+    {
+        //Parallel computation
+        //Change number of blocks to process from 1 to 100 in .take().
+        let chain = chain.iter().take(10).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
+
+        let mut proofs = Vec::new();
+
+        let timing = TimingTree::new("Build proofs parallel", Level::Info);
+        for block in &chain {
+            proofs.push(create_and_prove(&block, &mut hasher, &mut cached_circuits));
+        }
+        timing.print();
+
+        let timing = TimingTree::new("Compose parallel", Level::Info);
+        let (proof, data) = proofs
+            .par_iter()
+            .cloned()
+            .reduce_with(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
+            .unwrap();
+        timing.print();
+
+        let proof_bytes = proof.to_bytes();
+        println!("FInal proof size: {} bytes", proof_bytes.len());
+        data.verify(proof).unwrap();
     }
-    timing.print(); */
-
-    let timing = TimingTree::new("Compose sequential", Level::Debug);
-    let (proof, data) = proofs
-        .clone()
-        .into_iter()
-        .reduce(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
-        .unwrap();
-    timing.print();
-
-    let proof_bytes = proof.to_bytes();
-    println!("Recursive proof: {} bytes", proof_bytes.len());
-    data.verify(proof).unwrap();
-
-    let timing = TimingTree::new("compose_parallel", Level::Debug);
-    let (proof, data) = proofs
-        .par_iter()
-        .cloned()
-        .reduce_with(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
-        .unwrap();
-    timing.print();
-
-    let proof_bytes = proof.to_bytes();
-    println!("Recursive proof: {} bytes", proof_bytes.len());
-    data.verify(proof).unwrap();
 }
