@@ -10,6 +10,8 @@ use near_primitives::types::ValidatorStakeV1;
 use rayon::prelude::*;
 
 use std::fs;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 use near_crypto::signature::Signature;
 use near_primitives::block::{
@@ -84,9 +86,10 @@ fn proof_with_inputs(
 
 fn create_and_prove(
     block_header: &BlockHeaderV3,
-    hasher: &mut Sha256,
     cached_circuits: &mut HashMap<usize, (CircuitData<F, C, D>, Sha256Targets)>,
 ) -> (ProofWithPublicInputs<F, C, D>, CircuitData<F, C, D>) {
+    let mut hasher = Sha256::new();
+
     let hash_inner = BlockHeader::compute_inner_hash(
         &block_header.inner_lite.try_to_vec().unwrap(),
         &block_header.inner_rest.try_to_vec().unwrap(),
@@ -100,7 +103,7 @@ fn create_and_prove(
         .serialize(block)
         .expect("failed to serialize to block");
     combine_hash
-        .serialize(hasher)
+        .serialize(&mut hasher)
         .expect("failed to serialize to block");
 
     let final_hash = CryptoHash(hasher.finalize_reset().into());
@@ -260,11 +263,7 @@ fn read_blocks() -> Vec<BlockHeaderV3> {
 }
 
 fn main() {
-    let mut hasher = Sha256::new();
-
     let chain = read_blocks();
-
-    let mut cached_circuits = HashMap::new();
 
     let mut logger = env_logger::Builder::from_default_env();
     logger.format_timestamp(None);
@@ -275,12 +274,12 @@ fn main() {
         //Sequential computation
         //Change number of blocks to process from 1 to 100 in .take().
         let chain = chain.iter().take(10).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
-
+        let mut cached_circuits = HashMap::new();
         let mut proofs = Vec::new();
 
         let timing = TimingTree::new("Build proofs sequential", Level::Info);
         for block in &chain {
-            proofs.push(create_and_prove(&block, &mut hasher, &mut cached_circuits));
+            proofs.push(create_and_prove(&block, &mut cached_circuits));
         }
         timing.print();
 
@@ -300,14 +299,14 @@ fn main() {
     {
         //Parallel computation
         //Change number of blocks to process from 1 to 100 in .take().
-        let chain = chain.iter().take(10).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
-
-        let mut proofs = Vec::new();
+        let chain = chain.iter().take(5).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
+        let cached_circuits = Arc::new(Mutex::new(HashMap::new()));
 
         let timing = TimingTree::new("Build proofs parallel", Level::Info);
-        for block in &chain {
-            proofs.push(create_and_prove(&block, &mut hasher, &mut cached_circuits));
-        }
+        let proofs: Vec<_> = chain
+            .par_iter()
+            .map(|block| create_and_prove(&block, &mut cached_circuits.clone().lock().unwrap()))
+            .collect();
         timing.print();
 
         let timing = TimingTree::new("Compose parallel", Level::Info);
