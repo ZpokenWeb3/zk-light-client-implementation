@@ -1,12 +1,12 @@
-## This is implementation of Near Protocol zk light client based on proving headers of epoch blocks
+## Implementation of Near Protocol ZK light client based on proving headers of epoch blocks
 
-## **Decription**
+## **Description**
 
-In our current scheme we create a chain of epoch blocks.
+In our current scheme, we create a chain of epoch blocks.
 
 We use the epoch block structure from the NEAR protocol.
 
-In the current implementation we recursively prove the computational integrity of only epoch blocks. These proofs contain only proofs for the hash of epoch blocks.
+In the current implementation, we recursively prove the computational integrity of only epoch blocks. These proofs contain only proofs for the hash of epoch blocks.
 
 The figure below shows the proving scheme, which contains:
 - Bi are the epoch blocks;
@@ -18,7 +18,7 @@ The figure below shows the proving scheme, which contains:
 
 This is a simplified version of the proving system, where we will additionally prove signatures (of the block producer & validators) for epoch blocks and the whole set of proofs (hash, producer ‘s & validators’ signatures) for ordinary blocks.
 
-## **Prerecusites**
+## **Prerequisites**
 
 This project requires using the nightly Rust toolchain, which can be used by default in this way:
 ```
@@ -32,25 +32,10 @@ cargo run --release
 
 ## **Results**
 
-### Time for the first 10 blocks recursion proofs
-Block number |build, s	| prove, s |	verify, s
----|---|---|---
-1|	2.5633|	4.6440|	0.0070
-2|	2.0640|	5.1424|	0.0076
-3|	2.4430|	4.8360|	0.0071
-4|	2.0789|	4.3056|	0.0076
-5|	2.1833|	4.4122|	0.0069
-6|	2.1611|	4.4126|	0.0071
-7|	2.1334|	4.1623|	0.0071
-8|	2.1054|	4.2416|	0.0070
-9|	2.1219|	4.1295|	0.0072
-avg|	2.2060|	4.4762|	0.0072
-
-### Total time for recursion proofs
-Block quantity |build + prove +	verify, s (h : m : s)
----|---:
-1|	6 (00:00:06)
-10|	68 (00:01:08)
-1000|	687 (00:11:27)
-10000|	6934 (01:55:34)
-42000 (epoch)|	70223 (19:30:23)
+### Time for the 100 epoch blocks
+After run, you will see output similar to the next one:
+```
+[INFO  plonky2::util::timing] 89.6174s to Build proofs parallel
+[INFO  plonky2::util::timing] 115.5254s to Compose parallel
+```
+So, the total time to compute on our machine (32 threads) was 205 seconds (3:25).
