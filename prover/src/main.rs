@@ -11,7 +11,7 @@ use rayon::prelude::*;
 
 use std::fs;
 use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 use near_crypto::signature::Signature;
 use near_primitives::block::{
@@ -42,43 +42,43 @@ type C = PoseidonGoldilocksConfig;
 
 const D: usize = 2;
 
-fn get_sha256_circuit(
-    block_len: usize,
-    cached_circuits: &mut HashMap<usize, (CircuitData<F, C, D>, Sha256Targets)>,
-) -> (CircuitData<F, C, D>, Sha256Targets) {
-    match cached_circuits.get(&block_len) {
-        Some(cache) => cache.clone(),
-        None => {
-            let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::wide_ecc_config());
-            let hash_targets = sha256_circuit(&mut builder, block_len * 8);
+fn get_sha256_circuits(
+    block_lengths: Vec<usize>,
+) -> HashMap<
+    usize,
+    (
+        CircuitData<GoldilocksField, PoseidonGoldilocksConfig, D>,
+        Sha256Targets,
+    ),
+> {
+    let mut cached_circuits: HashMap<usize, (CircuitData<F, C, D>, Sha256Targets)> = HashMap::new();
+    println!("Total circuits is {}", block_lengths.len());
+    for block_len in block_lengths {
+        println!("Creating circuit for block_len {}", block_len);
 
-            //let timing = TimingTree::new("build", Level::Debug);
-            let circuit_data = builder.build::<C>();
-            //timing.print();
+        let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::wide_ecc_config());
+        let hash_targets = sha256_circuit(&mut builder, block_len * 8);
+        let circuit_data = builder.build::<C>();
 
-            cached_circuits.insert(block_len, (circuit_data.clone(), hash_targets.clone()));
-
-            (circuit_data, hash_targets)
-        }
+        cached_circuits.insert(block_len, (circuit_data, hash_targets));
     }
+    cached_circuits
 }
 
 fn proof_with_inputs(
     block: &[u8],
-    hash_targets: Sha256Targets,
+    hash_targets: &Sha256Targets,
     circuit_data: &CircuitData<F, C, D>,
 ) -> ProofWithPublicInputs<F, C, D> {
     let block_bits = array_to_bits(block);
 
     let mut pw = PartialWitness::new();
-
     for i in 0..block_bits.len() {
         pw.set_bool_target(hash_targets.message[i], block_bits[i]);
     }
 
     let timing = TimingTree::new("prove", Level::Debug);
     let proof = circuit_data.prove(pw.to_owned()).unwrap();
-
     timing.print();
 
     proof
@@ -86,7 +86,7 @@ fn proof_with_inputs(
 
 fn create_and_prove(
     block_header: &BlockHeaderV3,
-    cached_circuits: &mut HashMap<usize, (CircuitData<F, C, D>, Sha256Targets)>,
+    cached_circuits: &HashMap<usize, (CircuitData<F, C, D>, Sha256Targets)>,
 ) -> (ProofWithPublicInputs<F, C, D>, CircuitData<F, C, D>) {
     let mut hasher = Sha256::new();
 
@@ -113,15 +113,15 @@ fn create_and_prove(
     assert_eq!(test, final_hash_manual);
     assert_eq!(test, final_hash);
 
-    let (block_circuit_data, sha256_targets) = get_sha256_circuit(block.len(), cached_circuits);
+    let (block_circuit_data, sha256_targets) = cached_circuits.get(&block.len()).unwrap();
 
-    let block_proof_with_pis = proof_with_inputs(&block, sha256_targets, &block_circuit_data);
+    let block_proof_with_pis = proof_with_inputs(&block, sha256_targets, block_circuit_data);
 
     block_circuit_data
         .verify(block_proof_with_pis.clone())
         .unwrap();
 
-    (block_proof_with_pis, block_circuit_data)
+    (block_proof_with_pis, block_circuit_data.to_owned())
 }
 
 fn compose(
@@ -270,11 +270,13 @@ fn main() {
     logger.filter_level(LevelFilter::Info);
     logger.try_init().unwrap();
 
+    
     {
         //Sequential computation
         //Change number of blocks to process from 1 to 100 in .take().
-        let chain = chain.iter().take(5).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
-        let mut cached_circuits = HashMap::new();
+        //let chain = chain.iter().take(5).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
+        let block_lenghts = vec![CryptoHash::default().as_bytes().len() * 2];        
+        let mut cached_circuits = get_sha256_circuits(block_lenghts);
         let mut proofs = Vec::new();
 
         let timing = TimingTree::new("Build proofs sequential", Level::Info);
@@ -294,18 +296,21 @@ fn main() {
         let proof_bytes = proof.to_bytes();
         println!("Final proof size: {} bytes", proof_bytes.len());
         data.verify(proof).unwrap();
-    }
+    }    
 
     {
         //Parallel computation
         //Change number of blocks to process from 1 to 100 in .take().
-        let chain = chain.iter().take(5).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
-        let cached_circuits = Arc::new(Mutex::new(HashMap::new()));
+        println!("Parsed");
+        //let chain = chain.iter().take(5).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
+        //println!("Take 5");
+        let block_lenghts = vec![CryptoHash::default().as_bytes().len() * 2];
+        let cached_circuits = Arc::new(RwLock::new(get_sha256_circuits(block_lenghts)));
 
         let timing = TimingTree::new("Build proofs parallel", Level::Info);
         let proofs: Vec<_> = chain
             .par_iter()
-            .map(|block| create_and_prove(&block, &mut cached_circuits.clone().lock().unwrap()))
+            .map(|block| create_and_prove(block, &cached_circuits.clone().read().unwrap()))
             .collect();
         timing.print();
 
@@ -318,7 +323,7 @@ fn main() {
         timing.print();
 
         let proof_bytes = proof.to_bytes();
-        println!("FInal proof size: {} bytes", proof_bytes.len());
+        println!("Final proof size: {} bytes", proof_bytes.len());
         data.verify(proof).unwrap();
     }
 }
