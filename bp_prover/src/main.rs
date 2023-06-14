@@ -1,28 +1,19 @@
 #![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
 
+use itertools::Itertools;
 use jemallocator::Jemalloc;
-use near_primitives::borsh::BorshSerialize;
-use near_primitives::merkle::combine_hash;
-use near_primitives::types::validator_stake::ValidatorStake;
-use near_primitives::types::ValidatorStakeV1;
-
-use rayon::prelude::*;
-
-use std::fs;
-use std::sync::Arc;
-use std::sync::RwLock;
-
-use near_crypto::signature::Signature;
-use near_primitives::block::{
-    BlockHeader, BlockHeaderInnerLite, BlockHeaderInnerRestV3, BlockHeaderV3,
-};
-use near_primitives::hash::CryptoHash;
-use serde_json::Value;
 
 #[global_allocator]
 static GLOBAL: Jemalloc = Jemalloc;
 
+use log::{Level, LevelFilter};
+use near_crypto::signature::Signature;
+use near_primitives::block::{BlockHeaderInnerLite, BlockHeaderInnerRestV3, BlockHeaderV3};
+use near_primitives::borsh::BorshSerialize;
+use near_primitives::hash::CryptoHash;
+use near_primitives::types::validator_stake::ValidatorStake;
+use near_primitives::types::ValidatorStakeV1;
 use plonky2::field::goldilocks_field::GoldilocksField;
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
@@ -30,12 +21,16 @@ use plonky2::plonk::circuit_data::{CircuitConfig, CircuitData, VerifierCircuitTa
 use plonky2::plonk::config::PoseidonGoldilocksConfig;
 use plonky2::plonk::proof::ProofWithPublicInputs;
 use plonky2::util::timing::TimingTree;
-use plonky2_sha256::circuit::{array_to_bits, sha256_circuit, Sha256Targets};
-
-use log::{Level, LevelFilter};
-use sha2::{Digest, Sha256};
-
+use plonky2_sha256_j::hash::sha256::{CircuitBuilderHashSha2, WitnessHashSha2};
+use plonky2_sha256_j::hash::{CircuitBuilderHash, HashInputTarget, HashOutputTarget};
+use rayon::prelude::*;
+use serde_json::Value;
+use sha2::Digest;
 use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::RwLock;
+use std::time::Instant;
+use std::{fs, io};
 
 type F = GoldilocksField;
 type C = PoseidonGoldilocksConfig;
@@ -43,77 +38,41 @@ type C = PoseidonGoldilocksConfig;
 const D: usize = 2;
 
 fn get_sha256_circuits(
-    block_lengths: Vec<usize>,
-) -> HashMap<
-    usize,
-    (
-        CircuitData<GoldilocksField, PoseidonGoldilocksConfig, D>,
-        Sha256Targets,
-    ),
-> {
-    let mut cached_circuits: HashMap<usize, (CircuitData<F, C, D>, Sha256Targets)> = HashMap::new();
-    for block_len in block_lengths {
-        let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::wide_ecc_config());
-        let hash_targets = sha256_circuit(&mut builder, block_len * 8);
+    lenghts: Vec<usize>,
+) -> HashMap<usize, (CircuitData<F, C, D>, HashInputTarget, HashOutputTarget)> {
+    let mut cached_circuits: HashMap<
+        usize,
+        (CircuitData<F, C, D>, HashInputTarget, HashOutputTarget),
+    > = HashMap::new();
+    for len in lenghts {
+        let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::standard_recursion_config());
+        let block_count = (len * 8 + 65 + 511) / 512;
+        let target_input = builder.add_virtual_hash_input_target(block_count, 512);
+        let target_output = builder.hash_sha256(&target_input);
         let circuit_data = builder.build::<C>();
 
-        cached_circuits.insert(block_len, (circuit_data, hash_targets));
+        cached_circuits.insert(len, (circuit_data, target_input, target_output));
     }
     cached_circuits
 }
 
-fn proof_with_inputs(
-    block: &[u8],
-    hash_targets: &Sha256Targets,
-    circuit_data: &CircuitData<F, C, D>,
-) -> ProofWithPublicInputs<F, C, D> {
-    let block_bits = array_to_bits(block);
-
-    let mut pw = PartialWitness::new();
-    for i in 0..block_bits.len() {
-        pw.set_bool_target(hash_targets.message[i], block_bits[i]);
-    }
-
-    let timing = TimingTree::new("prove", Level::Debug);
-    let proof = circuit_data.prove(pw.to_owned()).unwrap();
-    timing.print();
-
-    proof
-}
-
-fn create_and_prove(
-    block_header: &BlockHeaderV3,
-    cached_circuits: &HashMap<usize, (CircuitData<F, C, D>, Sha256Targets)>,
+fn prove(
+    validators_list: &Vec<u8>,
+    cached_circuits: &HashMap<usize, (CircuitData<F, C, D>, HashInputTarget, HashOutputTarget)>,
 ) -> (ProofWithPublicInputs<F, C, D>, CircuitData<F, C, D>) {
     println!("proving...");
-    let mut hasher = Sha256::new();
 
-    let hash_inner = BlockHeader::compute_inner_hash(
-        &block_header.inner_lite.try_to_vec().unwrap(),
-        &block_header.inner_rest.try_to_vec().unwrap(),
-    );
+    let (block_circuit_data, target_input, target_output) =
+        cached_circuits.get(&validators_list.len()).unwrap();
 
-    let test = combine_hash(&hash_inner, &block_header.prev_hash);
+    let mut hasher = sha2::Sha256::default();
+    hasher.update(validators_list.as_slice());
 
-    let block: &mut Vec<u8> = &mut Vec::new();
-    let combine_hash = (hash_inner, block_header.prev_hash);
-    combine_hash
-        .serialize(block)
-        .expect("failed to serialize to block");
-    combine_hash
-        .serialize(&mut hasher)
-        .expect("failed to serialize to block");
+    let mut pw = PartialWitness::new();
+    pw.set_sha256_input_target(&target_input, &validators_list);
+    pw.set_sha256_output_target(&target_output, &hasher.finalize());
 
-    let final_hash = CryptoHash(hasher.finalize_reset().into());
-    hasher.update(block.to_owned());
-    let final_hash_manual = CryptoHash(hasher.finalize_reset().into());
-
-    assert_eq!(test, final_hash_manual);
-    assert_eq!(test, final_hash);
-
-    let (block_circuit_data, sha256_targets) = cached_circuits.get(&block.len()).unwrap();
-
-    let block_proof_with_pis = proof_with_inputs(&block, sha256_targets, block_circuit_data);
+    let block_proof_with_pis = block_circuit_data.prove(pw).unwrap();
 
     block_circuit_data
         .verify(block_proof_with_pis.clone())
@@ -183,11 +142,16 @@ fn compose(
 fn read_blocks() -> Vec<BlockHeaderV3> {
     let mut chain = Vec::new();
 
-    let paths = fs::read_dir("../blocks").unwrap();
+    let mut paths = fs::read_dir("../blocks")
+        .unwrap()
+        .map(|res| res.map(|e| e.path()))
+        .collect::<Result<Vec<_>, io::Error>>()
+        .unwrap();
+
+    paths.sort();
 
     for path in paths {
-        let contents = fs::read_to_string(path.unwrap().path())
-            .expect("Should have been able to read the file");
+        let contents = fs::read_to_string(path).expect("Should have been able to read the file");
 
         let block: Value = serde_json::from_str(&contents).expect("failed to read json");
 
@@ -261,68 +225,92 @@ fn read_blocks() -> Vec<BlockHeaderV3> {
     chain
 }
 
+fn read_validators() -> Vec<Vec<u8>> {
+    let mut validators = Vec::new();
+
+    let mut paths = fs::read_dir("../validators_ordered")
+        .unwrap()
+        .map(|res| res.map(|e| e.path()))
+        .collect::<Result<Vec<_>, io::Error>>()
+        .unwrap();
+
+    paths.sort();
+
+    for path in paths {
+        println!("reeading from {:?}", path);
+        let contents = fs::read_to_string(path).expect("Should have been able to read the file");
+        let json: Value = serde_json::from_str(&contents).expect("failed to read json");
+        let json_result: Value = json["result"].clone();
+
+        let current_validators: Vec<ValidatorStakeV1> =
+            serde_json::from_value(json_result).expect("Error in current_validators");
+        let current_validators: Vec<ValidatorStake> = current_validators
+            .into_iter()
+            .map(|x| ValidatorStake::V1(x))
+            .collect();
+
+        let iter = current_validators.into_iter();
+        let n = u32::try_from(iter.len()).unwrap();
+        let mut serialized_list: Vec<u8> = n.to_le_bytes().to_vec();
+        iter.for_each(|value| BorshSerialize::serialize(&value, &mut serialized_list).unwrap());
+
+        validators.push(serialized_list);
+    }
+    validators
+}
+
 fn main() {
-    let chain = read_blocks();
+    let mut chain = read_blocks();
+    let mut validators_lists = read_validators();
+
+    chain.truncate(5);
+    validators_lists.truncate(5);
+
+    println!("Parsed");
 
     let mut logger = env_logger::Builder::from_default_env();
     logger.format_timestamp(None);
     logger.filter_level(LevelFilter::Info);
     logger.try_init().unwrap();
 
-    
-    {
-        //Sequential computation
-        //Change number of blocks to process from 1 to 100 in .take().
-        //let chain = chain.iter().take(5).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
-        let block_lenghts = vec![CryptoHash::default().as_bytes().len() * 2];        
-        let mut cached_circuits = get_sha256_circuits(block_lenghts);
-        let mut proofs = Vec::new();
+    let block_lenghts = validators_lists
+        .iter()
+        .map(|validator_list| validator_list.len())
+        .sorted()
+        .dedup()
+        .collect_vec();
+    println!("{:?}", block_lenghts);
+    let cached_circuits = Arc::new(RwLock::new(get_sha256_circuits(block_lenghts)));
 
-        let timing = TimingTree::new("Build proofs sequential", Level::Info);
-        for block in &chain {
-            proofs.push(create_and_prove(&block, &mut cached_circuits));
-        }
-        timing.print();
+    let timing = TimingTree::new("Map-reduce", Level::Info);
+    let now = Instant::now();
 
-        let timing = TimingTree::new("Compose sequential", Level::Info);
-        let (proof, data) = proofs
-            .clone()
-            .into_iter()
-            .reduce(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
-            .unwrap();
-        timing.print();
+    // Simple map-reduce, works ony with small data samples.
+    // let (proof, data) = validators_lists
+    //     .par_iter()
+    //     .map(|validator_list| prove(validator_list, &cached_circuits.clone().read().unwrap()))
+    //     .reduce_with(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
+    //     .unwrap();
 
-        let proof_bytes = proof.to_bytes();
-        println!("Final proof size: {} bytes", proof_bytes.len());
-        data.verify(proof).unwrap();
-    }    
+    let (proof, data) = validators_lists
+        .chunks(20)
+        .map(|chunk| {
+            chunk
+                .par_iter()
+                .map(|validator_list| {
+                    prove(validator_list, &cached_circuits.clone().read().unwrap())
+                })
+                .reduce_with(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
+                .unwrap()
+        })
+        .par_bridge()
+        .reduce_with(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
+        .unwrap();
 
-    {
-        //Parallel computation
-        //Change number of blocks to process from 1 to 100 in .take().
-        println!("Parsed");
-        //let chain = chain.iter().take(5).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
-        //println!("Take 5");
-        let block_lenghts = vec![CryptoHash::default().as_bytes().len() * 2];
-        let cached_circuits = Arc::new(RwLock::new(get_sha256_circuits(block_lenghts)));
+    timing.print();
+    println!("Map-reduce {}", now.elapsed().as_secs());
 
-        let timing = TimingTree::new("Build proofs parallel", Level::Info);
-        let proofs: Vec<_> = chain
-            .par_iter()
-            .map(|block| create_and_prove(block, &cached_circuits.clone().read().unwrap()))
-            .collect();
-        timing.print();
-
-        let timing = TimingTree::new("Compose parallel", Level::Info);
-        let (proof, data) = proofs
-            .par_iter()
-            .cloned()
-            .reduce_with(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
-            .unwrap();
-        timing.print();
-
-        let proof_bytes = proof.to_bytes();
-        println!("Final proof size: {} bytes", proof_bytes.len());
-        data.verify(proof).unwrap();
-    }
+    let proof_bytes = proof.to_bytes();
+    println!("Final proof size: {} bytes", proof_bytes.len());
+    data.verify(proof).unwrap();
 }
