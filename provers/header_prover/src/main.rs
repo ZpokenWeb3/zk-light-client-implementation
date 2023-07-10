@@ -2,27 +2,20 @@
 #![feature(generic_const_exprs)]
 
 use jemallocator::Jemalloc;
-use near_primitives::borsh::BorshSerialize;
-use near_primitives::merkle::combine_hash;
-use near_primitives::types::validator_stake::ValidatorStake;
-use near_primitives::types::ValidatorStakeV1;
-
-use rayon::prelude::*;
-
-use std::fs;
-use std::sync::Arc;
-use std::sync::RwLock;
-
-use near_crypto::signature::Signature;
-use near_primitives::block::{
-    BlockHeader, BlockHeaderInnerLite, BlockHeaderInnerRestV3, BlockHeaderV3,
-};
-use near_primitives::hash::CryptoHash;
-use serde_json::Value;
 
 #[global_allocator]
 static GLOBAL: Jemalloc = Jemalloc;
 
+use log::{Level, LevelFilter};
+use near_crypto::signature::Signature;
+use near_primitives::block::{
+    BlockHeader, BlockHeaderInnerLite, BlockHeaderInnerRestV3, BlockHeaderV3,
+};
+use near_primitives::borsh::BorshSerialize;
+use near_primitives::hash::CryptoHash;
+use near_primitives::merkle::combine_hash;
+use near_primitives::types::validator_stake::ValidatorStake;
+use near_primitives::types::ValidatorStakeV1;
 use plonky2::field::goldilocks_field::GoldilocksField;
 use plonky2::iop::witness::{PartialWitness, WitnessWrite};
 use plonky2::plonk::circuit_builder::CircuitBuilder;
@@ -31,11 +24,15 @@ use plonky2::plonk::config::PoseidonGoldilocksConfig;
 use plonky2::plonk::proof::ProofWithPublicInputs;
 use plonky2::util::timing::TimingTree;
 use plonky2_sha256::circuit::{array_to_bits, sha256_circuit, Sha256Targets};
-
-use log::{Level, LevelFilter};
+use plonky2_sha256_j::hash::sha256::{CircuitBuilderHashSha2, WitnessHashSha2};
+use plonky2_sha256_j::hash::{CircuitBuilderHash, HashInputTarget, HashOutputTarget};
+use rayon::prelude::*;
+use serde_json::Value;
 use sha2::{Digest, Sha256};
-
 use std::collections::HashMap;
+use std::fs;
+use std::sync::Arc;
+use std::sync::RwLock;
 
 type F = GoldilocksField;
 type C = PoseidonGoldilocksConfig;
@@ -58,6 +55,24 @@ fn get_sha256_circuits(
         let circuit_data = builder.build::<C>();
 
         cached_circuits.insert(block_len, (circuit_data, hash_targets));
+    }
+    cached_circuits
+}
+
+fn get_sha256_j_circuits(
+    block_lengths: Vec<usize>,
+) -> HashMap<usize, (CircuitData<F, C, D>, HashInputTarget, HashOutputTarget)> {
+    let mut cached_circuits: HashMap<
+        usize,
+        (CircuitData<F, C, D>, HashInputTarget, HashOutputTarget),
+    > = HashMap::new();
+    for block_len in block_lengths {
+        let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::standard_recursion_config());
+        let target_input = builder.add_virtual_hash_input_target(2, 512);
+        let target_output = builder.hash_sha256(&target_input);
+        let circuit_data = builder.build::<C>();
+
+        cached_circuits.insert(block_len, (circuit_data, target_input, target_output));
     }
     cached_circuits
 }
@@ -114,6 +129,40 @@ fn create_and_prove(
     let (block_circuit_data, sha256_targets) = cached_circuits.get(&block.len()).unwrap();
 
     let block_proof_with_pis = proof_with_inputs(&block, sha256_targets, block_circuit_data);
+
+    block_circuit_data
+        .verify(block_proof_with_pis.clone())
+        .unwrap();
+
+    (block_proof_with_pis, block_circuit_data.to_owned())
+}
+
+fn create_and_prove_j(
+    block_header: &BlockHeaderV3,
+    cached_circuits: &HashMap<usize, (CircuitData<F, C, D>, HashInputTarget, HashOutputTarget)>,
+) -> (ProofWithPublicInputs<F, C, D>, CircuitData<F, C, D>) {
+    println!("proving...");
+    let hash_inner = BlockHeader::compute_inner_hash(
+        &block_header.inner_lite.try_to_vec().unwrap(),
+        &block_header.inner_rest.try_to_vec().unwrap(),
+    );
+
+    let test = combine_hash(&hash_inner, &block_header.prev_hash);
+
+    let block: &mut Vec<u8> = &mut Vec::new();
+    let combine_hash = (hash_inner, block_header.prev_hash);
+    combine_hash
+        .serialize(block)
+        .expect("failed to serialize to block");
+
+    let (block_circuit_data, target_input, target_output) =
+        cached_circuits.get(&block.len()).unwrap();
+
+    let mut pw = PartialWitness::new();
+    pw.set_sha256_input_target(&target_input, &block);
+    pw.set_sha256_output_target(&target_output, test.as_bytes());
+
+    let block_proof_with_pis = block_circuit_data.prove(pw).unwrap();
 
     block_circuit_data
         .verify(block_proof_with_pis.clone())
@@ -183,7 +232,7 @@ fn compose(
 fn read_blocks() -> Vec<BlockHeaderV3> {
     let mut chain = Vec::new();
 
-    let paths = fs::read_dir("../blocks").unwrap();
+    let paths = fs::read_dir("../data/blocks").unwrap();
 
     for path in paths {
         let contents = fs::read_to_string(path.unwrap().path())
@@ -269,33 +318,34 @@ fn main() {
     logger.filter_level(LevelFilter::Info);
     logger.try_init().unwrap();
 
-    
     {
-        //Sequential computation
+        //Parallel computation
         //Change number of blocks to process from 1 to 100 in .take().
+        println!("Parsed");
         //let chain = chain.iter().take(5).collect::<Vec<&BlockHeaderV3>>(); //Remove to process all 100 blocks
-        let block_lenghts = vec![CryptoHash::default().as_bytes().len() * 2];        
-        let mut cached_circuits = get_sha256_circuits(block_lenghts);
-        let mut proofs = Vec::new();
+        //println!("Take 5");
+        let block_lenghts = vec![CryptoHash::default().as_bytes().len() * 2];
+        let cached_circuits = Arc::new(RwLock::new(get_sha256_j_circuits(block_lenghts)));
 
-        let timing = TimingTree::new("Build proofs sequential", Level::Info);
-        for block in &chain {
-            proofs.push(create_and_prove(&block, &mut cached_circuits));
-        }
+        let timing = TimingTree::new("Build proofs parallel", Level::Info);
+        let proofs: Vec<_> = chain
+            .par_iter()
+            .map(|block| create_and_prove_j(block, &cached_circuits.clone().read().unwrap()))
+            .collect();
         timing.print();
 
-        let timing = TimingTree::new("Compose sequential", Level::Info);
+        let timing = TimingTree::new("Compose parallel", Level::Info);
         let (proof, data) = proofs
-            .clone()
-            .into_iter()
-            .reduce(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
+            .par_iter()
+            .cloned()
+            .reduce_with(|acc, x| compose(&acc.0, &acc.1, &x.0, &x.1))
             .unwrap();
         timing.print();
 
         let proof_bytes = proof.to_bytes();
         println!("Final proof size: {} bytes", proof_bytes.len());
         data.verify(proof).unwrap();
-    }    
+    }
 
     {
         //Parallel computation

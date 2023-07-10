@@ -23,5 +23,5 @@ desktop.ini
 .Trashes
 ._*
 
-# Too large for git perfomance analize data
-perf.data
+#VSCode
+.vscode

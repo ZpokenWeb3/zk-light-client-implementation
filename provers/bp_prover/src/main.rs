@@ -142,7 +142,7 @@ fn compose(
 fn read_blocks() -> Vec<BlockHeaderV3> {
     let mut chain = Vec::new();
 
-    let mut paths = fs::read_dir("../blocks")
+    let mut paths = fs::read_dir("../data/blocks")
         .unwrap()
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, io::Error>>()
@@ -154,7 +154,6 @@ fn read_blocks() -> Vec<BlockHeaderV3> {
         let contents = fs::read_to_string(path).expect("Should have been able to read the file");
 
         let block: Value = serde_json::from_str(&contents).expect("failed to read json");
-
         let block: Value = block["header"].clone();
 
         let validator_proposals: Vec<ValidatorStakeV1> =
@@ -228,7 +227,7 @@ fn read_blocks() -> Vec<BlockHeaderV3> {
 fn read_validators() -> Vec<Vec<u8>> {
     let mut validators = Vec::new();
 
-    let mut paths = fs::read_dir("../validators_ordered")
+    let mut paths = fs::read_dir("../data/validators")
         .unwrap()
         .map(|res| res.map(|e| e.path()))
         .collect::<Result<Vec<_>, io::Error>>()
@@ -237,7 +236,6 @@ fn read_validators() -> Vec<Vec<u8>> {
     paths.sort();
 
     for path in paths {
-        println!("reeading from {:?}", path);
         let contents = fs::read_to_string(path).expect("Should have been able to read the file");
         let json: Value = serde_json::from_str(&contents).expect("failed to read json");
         let json_result: Value = json["result"].clone();

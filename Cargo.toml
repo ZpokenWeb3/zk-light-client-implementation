@@ -1,11 +1,12 @@
 [workspace]
 	members = [
-		"bp_prover",
-		"plonky2_ed25519",
-		"plonky2_sha256",
-		"plonky2_sha256_j",
-		"plonky2_sha512",
-		"prover",
+		"circuits/plonky2_ed25519",
+		"circuits/plonky2_sha256",
+		"circuits/plonky2_sha256_j",
+		"circuits/plonky2_sha512",
+		"provers/bp_prover",
+		"provers/header_prover",
+		"provers/sig_prover",
 	]
 	[workspace.package]
 		authors     = [ "Zpoken" ]
@@ -15,13 +16,14 @@
 
 	[workspace.dependencies]
 		anyhow              = "1.0.40"
+		clap                = { version = "4.0.29", features = [ "derive" ] }
 		criterion           = "0.3"
 		curve25519-dalek    = { git = "https://github.com/tikhono/curve25519-dalek", rev = "c87a7edfbc5694a581ef30e39673622fabe0c7c5" }
 		debug_print         = "1.0"
 		ed25519-compact     = "2.0.4"
 		env_logger          = "0.9.0"
 		hex                 = "0.4.3"
-		itertools           = "0.10.0"
+		itertools           = "0.10.5"
 		jemallocator        = "0.5.0"
 		keccak-hash         = "0.8.0"
 		log                 = "0.4.14"
@@ -30,24 +32,25 @@
 		num                 = { version = "0.4", features = [ "rand" ] }
 		plonky2             = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
 		plonky2_ecdsa       = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
-		plonky2_ed25519     = { path = "./plonky2_ed25519" }
+		plonky2_ed25519     = { path = "./circuits/plonky2_ed25519" }
 		plonky2_field       = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
 		plonky2_maybe_rayon = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
-		plonky2_sha256      = { path = "./plonky2_sha256" }
-		plonky2_sha256_j    = { path = "./plonky2_sha256_j" }
-		plonky2_sha512      = { path = "./plonky2_sha512" }
+		plonky2_sha256      = { path = "./circuits/plonky2_sha256" }
+		plonky2_sha256_j    = { path = "./circuits/plonky2_sha256_j" }
+		plonky2_sha512      = { path = "./circuits/plonky2_sha512" }
 		plonky2_u32         = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
 		plonky2_util        = { git = "https://github.com/tikhono/plonky2", rev = "066c82b91e09272560d0e3154b971a73339611d5" }
-		rand                = "0.8.4"
 		rand_chacha         = "0.3.1"
-		rayon               = "1.5.1"
-		serde               = { version = "1.0", features = [ "derive" ] }
+		rayon               = "1.5.3"
+		serde               = { version = "1.0", features = [ "alloc", "derive" ] }
 		serde_json          = "1.0"
 		serde_with          = { version = "2.2.0", features = [ "hex" ] }
 		sha2                = "0.10"
 		sha3                = "0.10"
 		static_assertions   = "1.1.0"
 		unroll              = "0.1.5"
+
+		rand = { version = "0.8.5", default-features = false, features = [ "getrandom" ] }
 
 
 
