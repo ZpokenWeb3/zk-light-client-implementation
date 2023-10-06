@@ -1,0 +1,15 @@
+[package]
+name = "script"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+version.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+reqwest = { version = "0.11", features = ["json"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+near-primitives = "0.17.0"
