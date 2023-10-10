@@ -13,3 +13,4 @@ reqwest = { version = "0.11", features = ["json"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
 near-primitives = "0.17.0"
+near-crypto = "0.17.0"
