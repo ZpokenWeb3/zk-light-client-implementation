@@ -15,7 +15,6 @@ use std::str::FromStr;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // let mut file = File::create("result_with_proofs.txt").expect("Unable to create file");
     let config_str = fs::read_to_string("script/config.json").unwrap();
     let config: Config = serde_json::from_str(&config_str).unwrap();
     let block_hash = config.block_hash;
