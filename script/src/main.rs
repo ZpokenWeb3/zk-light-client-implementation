@@ -47,7 +47,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .json()
         .await?;
 
-    println!("Current block header {:?}\n", block_response.result.header);
+    println!("Current block  {:?}", block_response.result.header);
 
     let block_hash = block_response.result.header.hash.clone();
     let current_block_height = block_response.result.header.height;
@@ -105,12 +105,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     println!(
-        "\nPrevious epoch block header {:?}",
+        "\nPrevious epoch block  {:?}",
         previous_epoch_block_response.result.header
     );
 
     println!(
-        "Computed hash {} == {} Stored hash in previous epoch block",
+        "computed hash {} == {} stored hash in previous epoch block",
         computed_bp_hash, previous_epoch_block_response.result.header.next_bp_hash
     );
 
