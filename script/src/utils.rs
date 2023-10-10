@@ -1,12 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub block_hash: String,
     pub network: u8,
 }
-
 
 #[derive(Debug, Serialize)]
 pub struct BlockRequest {
@@ -23,7 +21,6 @@ pub struct BlockRequestByHeight {
     pub method: &'static str,
     pub params: BlockParamHeight,
 }
-
 
 #[derive(Debug, Serialize)]
 pub struct BlockParamString {
@@ -45,7 +42,6 @@ pub struct BlockResultData {
     pub author: String,
     pub chunks: Vec<Chunk>,
     pub header: BlockHeader,
-
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -79,7 +75,6 @@ pub struct ValidatorsOrderedRequest {
 pub struct ValidatorsOrderedResponse {
     pub result: Vec<ValidatorOrdered>,
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ValidatorOrdered {
@@ -126,5 +121,3 @@ pub struct ValidatorOrdered {
 //     pub shards: Vec<u128>,
 //     pub stake: u128,
 // }
-
-
