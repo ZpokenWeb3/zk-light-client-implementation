@@ -31,7 +31,7 @@ Underpinning idea is to replicate near core's logic for calculating `next_bp_has
 
 Representative scheme:
 
-![image](https://github.com/ZpokenWeb3/zk-light-client-implementation/assets/58668238/e77de246-0daa-4555-b07f-6a98a06d2d53)
+![image](https://github.com/ZpokenWeb3/zk-light-client-implementation/assets/58668238/19584862-d23c-4518-b868-af9e36e9dc5f)
 
 
 1) Configure account in config.json file
