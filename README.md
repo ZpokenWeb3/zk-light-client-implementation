@@ -31,7 +31,7 @@ The underpinning idea is to replicate the Near core's logic for calculating `nex
 
 Representative scheme:
 
-![image](https://github.com/ZpokenWeb3/zk-light-client-implementation/assets/58668238/19584862-d23c-4518-b868-af9e36e9dc5f)
+![image](https://github.com/ZpokenWeb3/zk-light-client-implementation/assets/58668238/592095ca-6d19-43fa-8153-19eab7d463a5)
 
 
 1) Configure the account in the config.json file
