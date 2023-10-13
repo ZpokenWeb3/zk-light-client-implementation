@@ -120,7 +120,7 @@ fn create_and_prove(
         .expect("failed to serialize to block");
 
     let final_hash = CryptoHash(hasher.finalize_reset().into());
-    hasher.update(block.to_owned());
+    hasher.update(&block);
     let final_hash_manual = CryptoHash(hasher.finalize_reset().into());
 
     assert_eq!(test, final_hash_manual);
@@ -128,7 +128,7 @@ fn create_and_prove(
 
     let (block_circuit_data, sha256_targets) = cached_circuits.get(&block.len()).unwrap();
 
-    let block_proof_with_pis = proof_with_inputs(&block, sha256_targets, block_circuit_data);
+    let block_proof_with_pis = proof_with_inputs(block, sha256_targets, block_circuit_data);
 
     block_circuit_data
         .verify(block_proof_with_pis.clone())
@@ -159,8 +159,8 @@ fn create_and_prove_j(
         cached_circuits.get(&block.len()).unwrap();
 
     let mut pw = PartialWitness::new();
-    pw.set_sha256_input_target(&target_input, &block);
-    pw.set_sha256_output_target(&target_output, test.as_bytes());
+    pw.set_sha256_input_target(target_input, block);
+    pw.set_sha256_output_target(target_output, test.as_bytes());
 
     let block_proof_with_pis = block_circuit_data.prove(pw).unwrap();
 
@@ -248,7 +248,7 @@ fn read_blocks() -> Vec<BlockHeaderV3> {
 
         let validator_proposals: Vec<ValidatorStake> = validator_proposals
             .into_iter()
-            .map(|x| ValidatorStake::V1(x))
+            .map(ValidatorStake::V1)
             .collect();
 
         let inner_rest = BlockHeaderInnerRestV3 {

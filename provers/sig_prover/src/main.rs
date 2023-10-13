@@ -24,9 +24,9 @@ use plonky2::util::timing::TimingTree;
 use plonky2_ed25519::gadgets::eddsa::{ed25519_circuit, fill_ecdsa_targets, EDDSATargets};
 use plonky2_field::extension::Extendable;
 use serde_json::Value;
+use std::fs;
 use std::iter::zip;
 use std::time::Instant;
-use std::fs;
 
 type F = GoldilocksField;
 type C = PoseidonGoldilocksConfig;
@@ -104,7 +104,7 @@ fn read_block() -> BlockHeaderV3 {
 
     let validator_proposals: Vec<ValidatorStake> = validator_proposals
         .into_iter()
-        .map(|x| ValidatorStake::V1(x))
+        .map(ValidatorStake::V1)
         .collect();
 
     let inner_rest = BlockHeaderInnerRestV3 {
@@ -171,7 +171,7 @@ fn read_validators() -> Vec<ValidatorStake> {
         serde_json::from_value(json_result).expect("Error in current_validators");
     let current_validators: Vec<ValidatorStake> = current_validators
         .into_iter()
-        .map(|x| ValidatorStake::V1(x))
+        .map(ValidatorStake::V1)
         .collect();
     current_validators
 }
@@ -188,7 +188,7 @@ fn prove_ed25519_with_targets<
     data: &CircuitData<F, C, D>,
 ) -> (ProofWithPublicInputs<F, C, D>, CircuitData<F, C, D>) {
     let mut pw = PartialWitness::new();
-    fill_ecdsa_targets::<F, D>(&mut pw, msg, sigv, pkv, &targets);
+    fill_ecdsa_targets::<F, D>(&mut pw, msg, sigv, pkv, targets);
 
     let timing = TimingTree::new("prove", Level::Info);
     let proof = data.prove(pw).unwrap();
@@ -217,7 +217,7 @@ fn main() {
     logger.filter_level(LevelFilter::Info);
     logger.try_init().unwrap();
 
-    let creds: Vec<_> = zip(validators_lists.clone(), block.inner_rest.approvals.clone())
+    let creds: Vec<_> = zip(validators_lists, block.inner_rest.approvals)
         .filter(|pair| pair.1.is_some())
         .filter(|pair| pair.1.as_ref().unwrap().verify(&msg, pair.0.public_key()))
         .map(|pair| {

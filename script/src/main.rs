@@ -1,14 +1,15 @@
 mod utils;
 
 use crate::utils::{
-    BlockParamHeight, BlockParamString, BlockRequest, BlockRequestByHeight, BlockResponse, Config, ValidatorsOrderedResponse,
+    BlockParamHeight, BlockParamString, BlockRequest, BlockRequestByHeight, BlockResponse, Config,
+    ValidatorsOrderedResponse,
 };
 use near_primitives::hash::CryptoHash;
 use near_primitives::types::validator_stake::ValidatorStake;
 use near_primitives::types::AccountId;
 
 use near_crypto::PublicKey;
-use reqwest::{Client};
+use reqwest::Client;
 use serde_json::json;
 use std::fs;
 use std::str::FromStr;
@@ -101,7 +102,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .json()
         .await?;
-
 
     println!(
         "\nPrevious epoch block  {:?}",
