@@ -1,0 +1,5 @@
+Current block  BlockHeader { hash: "8g97zq8FYz9CoPUz2q4bPa4cu8qWHsTHAvDJJZJmkeXJ", prev_hash: "35umUe78qnDwQNYVnuyLNioBfKWFJUU35McudJnGCwCZ", block_merkle_root: "Gn7oEGenpmG4oqjoSXXYF23DKv4ywvvRduvkU7dgM5i4", prev_state_root: "Fy9jTH23Be7s2Z7MVfZzkwFntLdExeeKB7uXsGpGtCjF", height: 103252930, next_bp_hash: "Adg6d9qn5ywND9jeCLKWBfyDApZBDxQnAS4Fg6DNRNy7", epoch_id: "9FvVNfvwHedRx1p7ecHv82j5eWzdhmf6et5Zz1N9VdCH", next_epoch_id: "H5eeTE4gSnbyRM74pvALXDPqtnj56UihSr69pWVqvZcj" }
+Computed BP hash 4kxt6MNzALrkqb1omHKKiiitqtqBrHYXDQZYGddiG4Ap
+
+Previous epoch block  BlockHeader { hash: "9z4mJAqH7fNs5MWBP3z4ukG5Ahsehe5m75WyDLJ3yxU7", prev_hash: "GjLXfbTVp8u3sPs6jxGoe7tnHdtWbpujf53ceP44xd6U", block_merkle_root: "4t7XtunGEFU7bdGN1wv2wa1GaWkwRKxixRuTqYjSBN6G", prev_state_root: "64rgdi4D7HwmBU5QgGZkM7e7RdDXECQ6AggeizD1xQVU", height: 103209730, next_bp_hash: "4kxt6MNzALrkqb1omHKKiiitqtqBrHYXDQZYGddiG4Ap", epoch_id: "AQwyVUzBDaAtDUaD6wh4PCWvpQh8gpiD46kH4PermPSx", next_epoch_id: "9FvVNfvwHedRx1p7ecHv82j5eWzdhmf6et5Zz1N9VdCH" }
+computed hash 4kxt6MNzALrkqb1omHKKiiitqtqBrHYXDQZYGddiG4Ap == 4kxt6MNzALrkqb1omHKKiiitqtqBrHYXDQZYGddiG4Ap stored hash in previous epoch block
