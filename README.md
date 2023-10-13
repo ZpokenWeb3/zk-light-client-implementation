@@ -1,13 +1,13 @@
 ## Implementation of Near Protocol ZK light client
 
-## Headers proving of epoch blocks
+## Proving next_bp_hash
 
-#### To prove that an arbitrary block was indeed included in blockchain, we want to prove that a set of validator that produced that block is valid and actual take place in calculating `next_bp_hash`
+#### To prove that an arbitrary block was indeed included in the blockchain, we want to prove that a set of validator that produced that block is valid and actually take place in calculating `next_bp_hash`
 
 
 #### Let's consider arbitrary block from the [Near Explorer](https://explorer.near.org/blocks/qzPg1pgc96QvWFPVeERhjcPi5MfjDnFx7jWHMhDsvFV) and its hash `qzPg1pgc96QvWFPVeERhjcPi5MfjDnFx7jWHMhDsvFV`
 
-Underpinning idea is to replicate near core's logic for calculating `next_bp_hash` and compare it to the real values obtained from blockchain through RPC commands. The logic is the following:
+The underpinning idea is to replicate the Near core's logic for calculating `next_bp_hash` and compare it to the real values obtained from the blockchain through RPC commands. The logic is the following:
 
 ```rust
    pub fn compute_bp_hash(
@@ -34,7 +34,7 @@ Representative scheme:
 ![image](https://github.com/ZpokenWeb3/zk-light-client-implementation/assets/58668238/19584862-d23c-4518-b868-af9e36e9dc5f)
 
 
-1) Configure account in config.json file
+1) Configure the account in the config.json file
 
 ```json
 {
@@ -43,7 +43,7 @@ Representative scheme:
 }
 ```
 
-2) Query the ordered validators for the N-th epoch through RPC command `EXPERIMENTAL_validators_ordered`
+2) Query the ordered validators for the N-th epoch through the RPC command `EXPERIMENTAL_validators_ordered`
 
 
 ```
@@ -77,7 +77,7 @@ So now we have
 `Computed BP hash CdXTGjuJgpwEMQzKDxirXSvcZr6fxMc9SFWMm8MgnKrY
 `
 
-4) Calculated hash_borsh have to be equal to the next_bp_hash for all blocks from the previous epochs. So lets query block info for the block from the previous epoch supposing that there is [43200 blocks in one epoch](https://docs.near.org/concepts/basics/epoch).
+4) Calculated hash_borsh has to be equal to the next_bp_hash for all blocks from the previous epochs. So lets query block info for the block from the previous epoch supposing that there is [43200 blocks in one epoch](https://docs.near.org/concepts/basics/epoch).
 ```
     const BLOCKS_IN_EPOCH: u128 = 43_200;
 
