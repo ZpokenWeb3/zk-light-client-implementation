@@ -76,8 +76,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         block_hash_from_header(BlockHeader::from(block_response.result.header.clone()));
 
     println!(
-        "Calculated block hash from BlockHeader to BlockHeaderView {:?}\n",
-        computed_block_hash.unwrap()
+        "Calculated block hash from BlockHeader {:?} == {:?} BlockHeaderView\n",
+        computed_block_hash.unwrap(), block_response.result.header.hash
     );
 
     assert_eq!(
