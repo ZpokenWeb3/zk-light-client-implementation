@@ -24,9 +24,9 @@ use plonky2::util::timing::TimingTree;
 use plonky2_ed25519::gadgets::eddsa::{ed25519_circuit, fill_ecdsa_targets, EDDSATargets};
 use plonky2_field::extension::Extendable;
 use serde_json::Value;
+use std::fs;
 use std::iter::zip;
 use std::time::Instant;
-use std::fs;
 
 type F = GoldilocksField;
 type C = PoseidonGoldilocksConfig;
