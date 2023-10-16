@@ -1,7 +1,6 @@
 mod utils;
 
 use crate::utils::{
-
     block_hash_from_header, BlockParamHeight, BlockParamString, BlockRequest, BlockRequestByHeight,
     BlockResponse, Config, ValidatorsOrderedResponse,
 };
@@ -16,7 +15,7 @@ use reqwest::Client;
 use serde_json::json;
 use sha2::Digest;
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::str::FromStr;
 
 #[tokio::main]
@@ -115,23 +114,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             )
         });
 
-    /// Calculates hash of a borsh-serialised representation of list of objects.
-    ///
-    /// This behaves as if it first collected all the items in the iterator into
-    /// a vector and then calculating hash of borsh-serialised representation of
-    /// that vector.
-    ///
-    /// Panics if the iterator lies about its length.
+    // Calculates hash of a borsh-serialised representation of list of objects.
+    //
+    // This behaves as if it first collected all the items in the iterator into
+    // a vector and then calculating hash of borsh-serialised representation of
+    // that vector.
+    //
+    // Panics if the iterator lies about its length.
     let iter = validator_stakes;
     let n = u32::try_from(iter.len()).unwrap();
     let mut hasher = sha2::Sha256::default();
     hasher.write_all(&n.to_le_bytes()).unwrap();
-    let count = iter
-        .inspect(|value| BorshSerialize::serialize(&value, &mut hasher).unwrap())
-        .count();
-    assert_eq!(n as usize, count);
-    let computed_bp_hash = CryptoHash(hasher.finalize().into());
 
+    let count = iter
+        .inspect(|value| {
+            BorshSerialize::serialize(&value, &mut hasher).unwrap()
+        }
+        )
+        .count();
+
+    assert_eq!(n as usize, count);
+
+    let computed_bp_hash = CryptoHash(hasher.clone().finalize().into());
+
+    println!("Computed BP hash {:?}\n", hasher.clone().finalize().bytes());
     println!("Computed BP hash {:?}\n", computed_bp_hash);
 
     const BLOCKS_IN_EPOCH: u128 = 43_200;
