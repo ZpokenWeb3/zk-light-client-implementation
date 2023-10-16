@@ -69,8 +69,8 @@ fn prove(
     hasher.update(validators_list.as_slice());
 
     let mut pw = PartialWitness::new();
-    pw.set_sha256_input_target(&target_input, &validators_list);
-    pw.set_sha256_output_target(&target_output, &hasher.finalize());
+    pw.set_sha256_input_target(target_input, validators_list);
+    pw.set_sha256_output_target(target_output, &hasher.finalize());
 
     let block_proof_with_pis = block_circuit_data.prove(pw).unwrap();
 
@@ -162,7 +162,7 @@ fn read_blocks() -> Vec<BlockHeaderV3> {
 
         let validator_proposals: Vec<ValidatorStake> = validator_proposals
             .into_iter()
-            .map(|x| ValidatorStake::V1(x))
+            .map(ValidatorStake::V1)
             .collect();
 
         let inner_rest = BlockHeaderInnerRestV3 {
@@ -244,7 +244,7 @@ fn read_validators() -> Vec<Vec<u8>> {
             serde_json::from_value(json_result).expect("Error in current_validators");
         let current_validators: Vec<ValidatorStake> = current_validators
             .into_iter()
-            .map(|x| ValidatorStake::V1(x))
+            .map(ValidatorStake::V1)
             .collect();
 
         let iter = current_validators.into_iter();

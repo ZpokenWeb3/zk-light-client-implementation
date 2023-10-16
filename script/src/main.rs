@@ -1,6 +1,7 @@
 mod utils;
 
 use crate::utils::{
+
     block_hash_from_header, BlockParamHeight, BlockParamString, BlockRequest, BlockRequestByHeight,
     BlockResponse, Config, ValidatorsOrderedResponse,
 };
