@@ -1,3 +1,7 @@
+use near_primitives::block_header::BlockHeader;
+use near_primitives::hash::CryptoHash;
+use near_primitives::types::AccountId;
+use near_primitives::views::{BlockHeaderView, ChunkHeaderView};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
@@ -34,14 +38,14 @@ pub struct BlockParamHeight {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BlockResponse {
-    pub result: BlockResultData,
+    pub result: BlockView,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BlockResultData {
-    pub author: String,
-    pub chunks: Vec<Chunk>,
-    pub header: BlockHeader,
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct BlockView {
+    pub author: AccountId,
+    pub header: BlockHeaderView,
+    pub chunks: Vec<ChunkHeaderView>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -49,18 +53,6 @@ pub struct Chunk {
     pub chunk_hash: String,
     pub outcome_root: String,
     pub prev_state_root: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BlockHeader {
-    pub hash: String,
-    pub prev_hash: String,
-    pub block_merkle_root: String,
-    pub prev_state_root: String,
-    pub height: u128,
-    pub next_bp_hash: String,
-    pub epoch_id: String,
-    pub next_epoch_id: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -84,40 +76,6 @@ pub struct ValidatorOrdered {
     pub validator_stake_struct_version: String,
 }
 
-//
-// #[derive(Debug, Serialize)]
-// pub struct ValidatorsRequest {
-//     pub jsonrpc: &'static str,
-//     pub id: &'static str,
-//     pub method: &'static str,
-//     pub params: EpochIdParam,
-// }
-//
-//
-// #[derive(Debug, Serialize)]
-// pub struct EpochIdParam {
-//     pub epoch_id: String,
-// }
-// //
-//
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct ValidatorsResponse {
-//     pub result: ValidatorsResponseData,
-// }
-//
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct ValidatorsResponseData {
-//     pub current_validators: Vec<Validator>,
-//     pub epoch_height: u128,
-//     pub epoch_start_height: u128,
-//     pub next_validators: Vec<Validator>,
-// }
-//
-//
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct Validator {
-//     pub account_id: String,
-//     pub public_key: String,
-//     pub shards: Vec<u128>,
-//     pub stake: u128,
-// }
+pub fn block_hash_from_header(header: BlockHeader) -> Option<CryptoHash> {
+    Some(*header.hash())
+}
