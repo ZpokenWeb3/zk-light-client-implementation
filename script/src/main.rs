@@ -68,22 +68,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?
         .json()
         .await?;
-
-    println!("Current block  {:?}\n", block_response.result.header);
-
-    let computed_block_hash =
-        block_hash_from_header(BlockHeader::from(block_response.result.header.clone()));
-
-    println!(
-        "Calculated block hash from BlockHeader {:?} == {:?} BlockHeaderView\n",
-        computed_block_hash.unwrap(), block_response.result.header.hash
-    );
-
-    assert_eq!(
-        computed_block_hash.unwrap(),
-        block_response.result.header.hash,
-        "Computed block hash has to be equal to obtained from RPC BlockHeaderView\n"
-    );
+    println!("next_bp_hash PROVING");
+    println!("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 
     let block_hash = block_response.result.header.hash.clone();
     let current_block_height = block_response.result.header.height as u128;
@@ -126,18 +112,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut hasher = sha2::Sha256::default();
     hasher.write_all(&n.to_le_bytes()).unwrap();
 
+    println!(
+        "First part of the hashing: EXPERIMENTAL_validators_ordered len in bytes: {:?}",
+        n.to_le_bytes()
+    );
+    println!("Second part of the hashing:\n");
+
     let count = iter
         .inspect(|value| {
+            // Serialize this instance into a vector of bytes
+            println!(
+                "{:?}\n\t\tin bytes:  {:?}\n\n",
+                value,
+                BorshSerialize::try_to_vec(&value).unwrap()
+            );
             BorshSerialize::serialize(&value, &mut hasher).unwrap()
-        }
-        )
+        })
         .count();
 
     assert_eq!(n as usize, count);
 
     let computed_bp_hash = CryptoHash(hasher.clone().finalize().into());
 
-    println!("Computed BP hash {:?}\n", hasher.clone().finalize().bytes());
+    println!(
+        "Computed BP hash in bytes: {:?}\n",
+        hasher.clone().finalize().bytes()
+    );
     println!("Computed BP hash {:?}\n", computed_bp_hash);
 
     const BLOCKS_IN_EPOCH: u128 = 43_200;
@@ -167,8 +167,40 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     println!(
-        "computed hash {} == {} stored hash in previous epoch block\n",
+        "computed hash {} == {} stored hash in previous epoch block",
         computed_bp_hash, previous_epoch_block_response.result.header.next_bp_hash
+    );
+    println!("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n\n");
+
+    println!("block_hash PROVING");
+    println!("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+
+    println!("Current block  {:?}\n", block_response.result.header);
+
+    println!(
+        "Current block next_bp_hash in bytes: {:?}\n",
+        BorshSerialize::try_to_vec(&block_response.result.header.next_bp_hash).unwrap()
+    );
+
+    // next_bp_hash доводимо що хеш може бути сформований лише одним чином, тільки одним набором даних молжна отримати це хешування.
+    let computed_block_hash =
+        block_hash_from_header(BlockHeader::from(block_response.result.header.clone()));
+
+    println!(
+        "computed block_hash in bytes {:?}\n",
+        BorshSerialize::try_to_vec(&computed_block_hash.unwrap()).unwrap()
+    );
+
+    println!(
+        "Calculated block hash from BlockHeader {:?} == {:?} BlockHeaderView\n",
+        computed_block_hash.unwrap(),
+        block_response.result.header.hash
+    );
+
+    assert_eq!(
+        computed_block_hash.unwrap(),
+        block_response.result.header.hash,
+        "Computed block hash has to be equal to obtained from RPC BlockHeaderView\n"
     );
 
     Ok(())
