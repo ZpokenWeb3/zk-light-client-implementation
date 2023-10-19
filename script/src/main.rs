@@ -164,14 +164,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     writeln!(
         file_next_bp_hash_proving,
-        "EXPERIMENTAL_validators_ordered single input array of bytes: {:?}\n\n",
+        "EXPERIMENTAL_validators_ordered input array of bytes: {:?}\n\n",
         final_bytes
     )
     .expect("Unable to write to file");
 
     writeln!(
         file_validator_bytes_representation,
-        "EXPERIMENTAL_validators_ordered single input array of bytes: {:?}\n\n",
+        "EXPERIMENTAL_validators_ordered input array of bytes: {:?}",
         final_bytes
     )
     .expect("Unable to write to file");
@@ -254,7 +254,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     writeln!(
         file_block_hash_proving,
-        "computed block_hash in bytes {:?}\n\n",
+        "computed block hash in bytes {:?}\n\n",
         BorshSerialize::try_to_vec(&computed_block_hash.unwrap()).unwrap(),
     )
     .expect("Unable to write to file");
