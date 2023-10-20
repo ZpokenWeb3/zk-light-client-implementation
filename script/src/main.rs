@@ -22,6 +22,8 @@ use std::str::FromStr;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // -------------- initial settings  --------------
+
     let mut file_next_bp_hash_proving =
         File::create("script/results/next_bp_hash_proving.txt").expect("Unable to create file");
     let mut file_block_hash_proving =
@@ -47,6 +49,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             panic!("Wrong network. Should be testnet OR mainnet")
         }
     };
+
+    // -------------- querying current block info --------------
 
     let client = Client::new();
 
@@ -84,6 +88,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let block_hash = block_response.result.header.hash.clone();
     let current_block_height = block_response.result.header.height as u128;
 
+    // -------------- querying EXPERIMENTAL_validators_ordered for current block --------------
+
     let validators_ordered_request = json!({
         "jsonrpc": "2.0",
         "method": "EXPERIMENTAL_validators_ordered",
@@ -99,6 +105,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .json()
         .await?;
 
+    // -------------- serializing EXPERIMENTAL_validators_ordered into ValidatorStake structure --------------
+
     let validator_stakes = validators_ordered_response
         .result
         .into_iter()
@@ -110,13 +118,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             )
         });
 
-    // Calculates hash of a borsh-serialised representation of list of objects.
-    //
-    // This behaves as if it first collected all the items in the iterator into
-    // a vector and then calculating hash of borsh-serialised representation of
-    // that vector.
-    //
-    // Panics if the iterator lies about its length.
+    // -------------- two-part hashing algorithm for next_bp_hash --------------
+
     let iter = validator_stakes;
     let n = u32::try_from(iter.len()).unwrap();
     let mut hasher = sha2::Sha256::default();
@@ -133,11 +136,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "First part of the hashing: EXPERIMENTAL_validators_ordered len in bytes: {:?}\n\n",
         n.to_le_bytes().try_to_vec().unwrap()
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
     let count = iter
         .inspect(|value| {
-            // Serialize this instance into a vector of bytes
             writeln!(file_validator_bytes_representation, "{:?}\naccount_id bytes: {:?}\npublic key bytes: {:?}\nstake bytes: {:?}\nwhole byte representation in bytes:  {:?}\n\n",
                      value,
                      BorshSerialize::try_to_vec(&value.account_id()).unwrap(),
@@ -155,40 +157,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let computed_bp_hash = CryptoHash(hasher.clone().finalize().into());
 
+    // -------------- next_bp_hash calculation results output --------------
+
     writeln!(
         file_next_bp_hash_proving,
         "Second part of the hashing EXPERIMENTAL_validators_ordered as ValidatorStake: {:?}\n\n",
         experimental_validators_ordered_bytes
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
     writeln!(
         file_next_bp_hash_proving,
         "EXPERIMENTAL_validators_ordered input array of bytes: {:?}\n\n",
         final_bytes
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
     writeln!(
         file_validator_bytes_representation,
         "EXPERIMENTAL_validators_ordered input array of bytes: {:?}",
         final_bytes
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
     writeln!(
         file_next_bp_hash_proving,
         "Computed BP hash in bytes: {:?}\n\n",
         hasher.clone().finalize().bytes()
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
     writeln!(
         file_next_bp_hash_proving,
         "Computed BP hash {:?}\n\n",
         computed_bp_hash
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
+
+    // -------------- querying previous epoch block info --------------
 
     const BLOCKS_IN_EPOCH: u128 = 43_200;
 
@@ -216,23 +222,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Previous epoch block  {:?}\n\n",
         previous_epoch_block_response.result.header
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
     writeln!(
         file_next_bp_hash_proving,
         "computed hash {} == {} stored hash in previous epoch block",
         computed_bp_hash, previous_epoch_block_response.result.header.next_bp_hash
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
-    writeln!(file_block_hash_proving, "block_hash PROVING\n\n",).expect("Unable to write to file");
+    // -------------- block hash proving --------------
+
+    writeln!(file_block_hash_proving, "block hash PROVING\n\n", ).expect("Unable to write to file");
 
     writeln!(
         file_block_hash_proving,
         "Current block BlockHeaderView:\t{:?}\n\n",
         block_response.result.header,
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
     writeln!(
         file_block_hash_proving,
@@ -246,18 +254,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Current block next_bp_hash in bytes: {:?}\n\n",
         BorshSerialize::try_to_vec(&block_response.result.header.next_bp_hash).unwrap(),
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
-    // next_bp_hash доводимо що хеш може бути сформований лише одним чином, тільки одним набором даних молжна отримати це хешування.
+    // -------------- block hash calculation from the BlockHeaderInnerLiteView structure --------------
+
     let computed_block_hash =
         block_hash_from_header(BlockHeader::from(block_response.result.header.clone()));
+
+    // -------------- block hash calculation results output --------------
 
     writeln!(
         file_block_hash_proving,
         "computed block hash in bytes {:?}\n\n",
         BorshSerialize::try_to_vec(&computed_block_hash.unwrap()).unwrap(),
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
     writeln!(
         file_block_hash_proving,
@@ -265,7 +276,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         computed_block_hash.unwrap(),
         block_response.result.header.hash,
     )
-    .expect("Unable to write to file");
+        .expect("Unable to write to file");
 
     assert_eq!(
         computed_block_hash.unwrap(),
