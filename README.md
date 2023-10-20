@@ -12,22 +12,20 @@ Table of contents
 <!--te-->
 
 
-
-
 Proving next_bp_hash
 ============
 
-#### To prove that an arbitrary block was indeed included in the blockchain, we want to prove that a set of validator that produced that block is valid and actually take place in calculating `next_bp_hash`.
-#### Moreover, we want to prove that there is only one byte input, that can be used for calculation for the `next_bp_hash` and block `hash` respectively.
-#### defined set of validators -> defined next_bp_hash -> defined block hash
-### There is three output files:
+##### To prove that an arbitrary block was indeed included in the blockchain, we want to prove that a set of validator that produced that block is valid and actually take place in calculating `next_bp_hash`.
+##### Moreover, we want to prove that there is only one byte input, that can be used for calculation for the `next_bp_hash` and block `hash` respectively.
+##### defined set of validators -> defined next_bp_hash -> defined block hash
+##### There is three output files:
 
 - next_bp_hash_proving.txt
 - block_hash_proving.txt
 - validator_bytes_representation.txt
 
 
-#### Let's consider arbitrary block from the [Near Explorer](https://explorer.near.org/blocks/ZfDzn9stN4mye2uuk3xoig94cPX7C6FS4YoATEK7qod) and its hash `ZfDzn9stN4mye2uuk3xoig94cPX7C6FS4YoATEK7qod`
+##### Let's consider arbitrary block from the [Near Explorer](https://explorer.near.org/blocks/ZfDzn9stN4mye2uuk3xoig94cPX7C6FS4YoATEK7qod) and its hash `ZfDzn9stN4mye2uuk3xoig94cPX7C6FS4YoATEK7qod`
 
 The underpinning idea is to replicate the Near core's logic for calculating `next_bp_hash` and compare it to the real values obtained from the blockchain through RPC commands. The logic is the following:
 
@@ -103,7 +101,7 @@ Representative scheme:
     }
 ```
 
-so we can see there is two steps:
+##### so we can see there is two steps:
 - first is to hash the len of the validators
 - iteratively hash all the validators data one by one
 
@@ -280,10 +278,10 @@ computed hash 4hngwWkMhYL8AGiU6tCf2Std14BhS1Xrg2m11XRgQ49d == 4hngwWkMhYL8AGiU6t
 Proving block hash calculation
 ============
 
-####  Now as we found out that `next_bp_hash` is calculated correctly we want to prove that there is only one byte input for the hashing algorithm for block `hash`, that involves `next_bp_hash` and indeed deterministic
+#####  Now as we found out that `next_bp_hash` is calculated correctly we want to prove that there is only one byte input for the hashing algorithm for block `hash`, that involves `next_bp_hash` and indeed deterministic
 
 
-From querying block we are construct the necessary structure BlockHeaderInnerLiteView that are used for calculating block `hash`. And then replicating inner logic of calculation of the block `hash`.
+##### From querying block we are construct the necessary structure BlockHeaderInnerLiteView that are used for calculating block `hash`. And then replicating inner logic of calculation of the block `hash`.
 
 ```rust
     let block_request = BlockRequest {
@@ -372,7 +370,7 @@ computed block hash in bytes [119, 216, 136, 159, 114, 76, 126, 105, 251, 241, 2
 Calculated block hash from BlockHeaderInnerLiteView 94q28fgYkVNbqoitXE529ds5RJYtxy8fbS3gJmUdEoug == 94q28fgYkVNbqoitXE529ds5RJYtxy8fbS3gJmUdEoug BlockHeaderView
 ```
 
-#### So, finally we proved two-step inclusion for the next_bp_hash and block hash, that means that our block hash was calculated correctly, having valid data in the first place.
+##### So, finally we proved two-step inclusion for the next_bp_hash and block hash, that means that our block hash was calculated correctly, having valid data in the first place.
 
 Implementation of Near Protocol ZK light client based on proving headers of epoch blocks
 ============
