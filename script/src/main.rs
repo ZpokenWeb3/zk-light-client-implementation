@@ -25,11 +25,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // -------------- initial settings  --------------
 
     let mut file_next_bp_hash_proving =
-        File::create("script/results/next_bp_hash_proving.txt").expect("Unable to create file");
+        File::create("script/output/next_bp_hash_proving.txt").expect("Unable to create file");
     let mut file_block_hash_proving =
-        File::create("script/results/block_hash_proving.txt").expect("Unable to create file");
+        File::create("script/output/block_hash_proving.txt").expect("Unable to create file");
     let mut file_validator_bytes_representation =
-        File::create("script/results/validator_bytes_representation.txt")
+        File::create("script/output/validator_bytes_representation.txt")
             .expect("Unable to create file");
 
     let config_str = fs::read_to_string("script/config.json").unwrap();
