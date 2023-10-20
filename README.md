@@ -1,9 +1,22 @@
 ## Implementation of Near Protocol ZK light client
 
-## Proving next_bp_hash
+Table of contents
+=================
 
-#### To prove that an arbitrary block was indeed included in the blockchain, we want to prove that a set of validator that produced that block is valid and actually take place in calculating `next_bp_hash`. 
-#### Moreover, we want to prove that there is only one byte input, that can be used for calculation for the `next_bp_hash` and block `hash` respectively. 
+<!--ts-->
+* [Proving next_bp_hash](#proving-nextbphash)
+* [Proving block hash calculation](#proving-block-hash-calculation)
+* [Implementation of Near Protocol ZK light client based on proving headers of epoch blocks](#implementation-of-near-protocol-zk-light-client-based-on-proving-headers-of-epoch-blocks)
+<!--te-->
+
+
+
+
+Proving next_bp_hash
+============
+
+#### To prove that an arbitrary block was indeed included in the blockchain, we want to prove that a set of validator that produced that block is valid and actually take place in calculating `next_bp_hash`.
+#### Moreover, we want to prove that there is only one byte input, that can be used for calculation for the `next_bp_hash` and block `hash` respectively.
 #### defined set of validators -> defined next_bp_hash -> defined block hash
 ### There is three output files:
 
@@ -61,7 +74,7 @@ Representative scheme:
  id=dontcare
 ```
 
-3) Replicate nearcore logic for compute_bp_hash and byte representation for the input data. Hashing algorithm for the next_bp_hash calculation is the following: 
+3) Replicate nearcore logic for compute_bp_hash and byte representation for the input data. Hashing algorithm for the next_bp_hash calculation is the following:
 
 ```
     /// Calculates hash of a borsh-serialised representation of list of objects.
@@ -88,11 +101,11 @@ Representative scheme:
     }
 ```
 
-so we can see there is two steps: 
+so we can see there is two steps:
 - first is to hash the len of the validators
 - iteratively hash all the validators data one by one
 
-The code is the following: 
+The code is the following:
 ```rust
     let iter = validator_stakes;
     let n = u32::try_from(iter.len()).unwrap();
@@ -260,7 +273,10 @@ computed hash 4hngwWkMhYL8AGiU6tCf2Std14BhS1Xrg2m11XRgQ49d == 4hngwWkMhYL8AGiU6t
 
 6) And success, it means our set of validator in byte representation is valid and next_bp_hash is calculated correctly.
 
-## Proving block hash calculation
+
+
+Proving block hash calculation
+============
 
 ####  Now as we found out that `next_bp_hash` is calculated correctly we want to prove that there is only one byte input for the hashing algorithm for block `hash`, that involves `next_bp_hash` and indeed deterministic
 
@@ -356,7 +372,8 @@ Calculated block hash from BlockHeaderInnerLiteView 94q28fgYkVNbqoitXE529ds5RJYt
 
 #### So, finally we proved two-step inclusion for the next_bp_hash and block hash, that means that our block hash was calculated correctly, having valid data in the first place.
 
-## Implementation of Near Protocol ZK light client based on proving headers of epoch blocks
+Implementation of Near Protocol ZK light client based on proving headers of epoch blocks
+============
 
 ## **Description**
 
