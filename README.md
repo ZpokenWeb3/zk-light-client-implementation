@@ -403,3 +403,5 @@ After run, you will see output similar to the next one:
 [INFO  plonky2::util::timing] 115.5254s to Compose parallel
 ```
 So, the total time to compute on our machine (32 threads) was 205 seconds (3:25).
+
+Developed by [Zpoken Cryptography Team](https://zpoken.io/)
