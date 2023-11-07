@@ -251,7 +251,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .expect("Unable to write to file");
 
     let block_header_inner_lite_view_json_data = serde_json::to_string(
-        &BlockHeaderInnerLiteView::from(BlockHeader::from(block_response.result.header.clone())),
+        &BlockHeader::from(block_response.result.header.clone()),
     )
     .unwrap();
     file_block_header_json
