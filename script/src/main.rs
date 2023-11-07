@@ -31,6 +31,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut file_validator_bytes_representation =
         File::create("script/output/validator_bytes_representation.txt")
             .expect("Unable to create file");
+    let mut file_block_header_json = File::create("script/output/block_header.json").unwrap();
+    let mut file_validators_ordered_json =
+        File::create("script/output/validators_ordered.json").unwrap();
 
     let config_str = fs::read_to_string("script/config.json").unwrap();
     let config: Config = serde_json::from_str(&config_str).unwrap();
@@ -105,6 +108,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .json()
         .await?;
 
+    let validators_ordered_json_data = serde_json::to_string(&validators_ordered_response).unwrap();
+    file_validators_ordered_json
+        .write_all(validators_ordered_json_data.as_bytes())
+        .unwrap();
+
     // -------------- serializing EXPERIMENTAL_validators_ordered into ValidatorStake structure --------------
 
     let validator_stakes = validators_ordered_response
@@ -136,7 +144,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "First part of the hashing: EXPERIMENTAL_validators_ordered len in bytes: {:?}\n\n",
         n.to_le_bytes().try_to_vec().unwrap()
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     let count = iter
         .inspect(|value| {
@@ -164,35 +172,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Second part of the hashing EXPERIMENTAL_validators_ordered as ValidatorStake: {:?}\n\n",
         experimental_validators_ordered_bytes
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     writeln!(
         file_next_bp_hash_proving,
         "EXPERIMENTAL_validators_ordered input array of bytes: {:?}\n\n",
         final_bytes
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     writeln!(
         file_validator_bytes_representation,
         "EXPERIMENTAL_validators_ordered input array of bytes: {:?}",
         final_bytes
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     writeln!(
         file_next_bp_hash_proving,
         "Computed BP hash in bytes: {:?}\n\n",
         hasher.clone().finalize().bytes()
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     writeln!(
         file_next_bp_hash_proving,
         "Computed BP hash {:?}\n\n",
         computed_bp_hash
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     // -------------- querying previous epoch block info --------------
 
@@ -222,29 +230,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Previous epoch block  {:?}\n\n",
         previous_epoch_block_response.result.header
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     writeln!(
         file_next_bp_hash_proving,
         "computed hash {} == {} stored hash in previous epoch block",
         computed_bp_hash, previous_epoch_block_response.result.header.next_bp_hash
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     // -------------- block hash proving --------------
 
-    writeln!(file_block_hash_proving, "block hash PROVING\n\n", ).expect("Unable to write to file");
+    writeln!(file_block_hash_proving, "block hash PROVING\n\n",).expect("Unable to write to file");
 
     writeln!(
         file_block_hash_proving,
         "Current block BlockHeaderView:\t{:?}\n\n",
         block_response.result.header,
     )
+    .expect("Unable to write to file");
+
+    let block_header_inner_lite_view_json_data = serde_json::to_string(
+        &BlockHeaderInnerLiteView::from(BlockHeader::from(block_response.result.header.clone())),
+    )
+    .unwrap();
+    file_block_header_json
+        .write_all(block_header_inner_lite_view_json_data.as_bytes())
+        .unwrap();
+
+    writeln!(
+        file_block_hash_proving,
+        "Current block that are used for calculating block hash BlockHeaderInnerLiteView:  {:?}\n\n",
+        &BlockHeaderInnerLiteView::from(BlockHeader::from(block_response.result.header.clone()))
+    )
         .expect("Unable to write to file");
 
     writeln!(
         file_block_hash_proving,
-        "Current block that are used for calculating block_hash in bytes BlockHeaderInnerLiteView:  {:?}\n\n",
+        "Current block that are used for calculating block hash in bytes BlockHeaderInnerLiteView:  {:?}\n\n",
         BorshSerialize::try_to_vec(&BlockHeaderInnerLiteView::from(BlockHeader::from(block_response.result.header.clone()))).unwrap(),
     )
         .expect("Unable to write to file");
@@ -254,7 +277,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "Current block next_bp_hash in bytes: {:?}\n\n",
         BorshSerialize::try_to_vec(&block_response.result.header.next_bp_hash).unwrap(),
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     // -------------- block hash calculation from the BlockHeaderInnerLiteView structure --------------
 
@@ -268,7 +291,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "computed block hash in bytes {:?}\n\n",
         BorshSerialize::try_to_vec(&computed_block_hash.unwrap()).unwrap(),
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     writeln!(
         file_block_hash_proving,
@@ -276,7 +299,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         computed_block_hash.unwrap(),
         block_response.result.header.hash,
     )
-        .expect("Unable to write to file");
+    .expect("Unable to write to file");
 
     assert_eq!(
         computed_block_hash.unwrap(),
