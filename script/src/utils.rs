@@ -1,4 +1,4 @@
-use near_primitives::block_header::BlockHeader;
+use near_primitives::block::BlockHeader;
 use near_primitives::hash::CryptoHash;
 use near_primitives::types::AccountId;
 use near_primitives::views::{BlockHeaderView, ChunkHeaderView};
