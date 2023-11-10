@@ -438,6 +438,12 @@ impl BlockHeader {
         let hash_rest = hash(inner_rest);
         combine_hash(&hash_lite, &hash_rest)
     }
+    
+    pub fn compute_hash(prev_hash: CryptoHash, inner_lite: &[u8], inner_rest: &[u8]) -> CryptoHash {
+        let hash_inner = BlockHeader::compute_inner_hash(inner_lite, inner_rest);
+
+        combine_hash(&hash_inner, &prev_hash)
+    }
     ...
 }
 ```
