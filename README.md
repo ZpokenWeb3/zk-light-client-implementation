@@ -7,6 +7,7 @@ Table of contents
 
 * [Proving next_bp_hash](#proving-nextbphash)
 * [Proving block hash calculation](#proving-block-hash-calculation)
+    * [Developers](#developers)
 * [Implementation of Near Protocol ZK light client based on proving headers of epoch blocks](#implementation-of-near-protocol-zk-light-client-based-on-proving-headers-of-epoch-blocks)
     * [Description](#description)
     * [Results](#results)
@@ -628,8 +629,61 @@ Calculated block hash from BlockHeaderInnerLiteView EcqGW4G71aXD3TU1cMbLUiPnahFc
 
 ##### So, finally we proved two-step inclusion for the next_bp_hash and block hash, that means that our block hash was calculated correctly, having valid data in the first place.
 
+
+
+## **Developers**
+
+
+To process and use light client you can copy `.json` utility files `block_header.json` and `validators_ordered.json` - the only pieces of data you have to obtain to verify the block. And then replicate the verification logic using any script language: Rust, JS , Go etc.
+
+Example using Rust ( simplified version ): 
+
+
+```rust
+pub fn main() -> Result<()> {
+    let mut file = File::open("../data/block_header.json")?;
+    let mut data = String::new();
+    file.read_to_string(&mut data)?;
+    let block_response: BlockResponse = serde_json::from_str(&data)?;
+    let block_header: BlockHeader = block_response.result.header.try_into()?;
+
+    println!("Hash: {:?} ", block_header.hash());
+    println!(
+        "Hash: {:?}",
+        BorshSerialize::try_to_vec(&block_header.hash())?
+    );
+
+    let computed_hash = compute_hash(
+        *block_header.prev_hash(),
+        &block_header.inner_lite_bytes(),
+        &block_header.inner_rest_bytes(),
+    );
+
+    println!("Computed hash: {:#?}", computed_hash);
+
+    println!(
+        "computed block hash in bytes {:?}\n\n",
+        BorshSerialize::try_to_vec(&computed_hash)?,
+    );
+
+    Ok(())
+}
+```
+
+
+
+
 Implementation of Near Protocol ZK light client based on proving headers of epoch blocks
 ============
+
+
+
+
+
+
+
+
+
 
 ## **Description**
 
