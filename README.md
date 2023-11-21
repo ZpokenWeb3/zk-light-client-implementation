@@ -64,7 +64,7 @@ values obtained from the blockchain through RPC commands. The logic is the follo
 
 Illustrative scheme:
 
-![image](https://github.com/ZpokenWeb3/zk-light-client-implementation/assets/58668238/592095ca-6d19-43fa-8153-19eab7d463a5)
+![image](https://github.com/ZpokenWeb3/zk-light-client-implementation/assets/58668238/69ad218f-13e9-47aa-9a59-cfecfbd6da70)
 
 1) Configure the account in the config.json file
 
