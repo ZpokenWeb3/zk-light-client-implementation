@@ -8,6 +8,7 @@ Table of contents
 * [Proving next_bp_hash](#proving-nextbphash)
 * [Proving block hash calculation](#proving-block-hash-calculation)
     * [Developers](#developers)
+    *
 * [Implementation of Near Protocol ZK light client based on proving headers of epoch blocks](#implementation-of-near-protocol-zk-light-client-based-on-proving-headers-of-epoch-blocks)
     * [Description](#description)
     * [Results](#results)
@@ -25,13 +26,15 @@ Proving next_bp_hash
 ##### defined set of validators -> defined next_bp_hash -> defined block hash
 
 ##### There is five output files:
+
 _(for illustrative purposes)_
 
 - next_bp_hash_proving.txt
 - block_hash_proving.txt
 - validator_bytes_representation.txt
 
- _(for utility purposes)_
+_(for utility purposes)_
+
 - block_header.json : **block header that we are proving**
 - next_block_header.json : **next_block header for the necessary info**
 - prev_epoch_block_header.json : **arbitrary block from prev_epoch (required next_bp_hash field)**
@@ -49,32 +52,48 @@ values obtained from the blockchain through RPC commands. The logic is the follo
     prev_epoch_id: EpochId,
     last_known_hash: &CryptoHash,
 ) -> Result<CryptoHash, Error> {
-    let bps = epoch_manager.get_epoch_block_producers_ordered(&epoch_id, last_known_hash)?; < ---------step 1 is to acquire block producers for that epoch
+    let bps = epoch_manager.get_epoch_block_producers_ordered(&epoch_id, last_known_hash)?; < ---------step
+    1
+    is
+    to
+    acquire
+    block
+    producers
+    for that epoch
     let protocol_version = epoch_manager.get_epoch_protocol_version(&prev_epoch_id)?;
     if checked_feature!("stable", BlockHeaderV3, protocol_version) {
         let validator_stakes = bps.into_iter().map(|(bp, _)| bp);
-        Ok(CryptoHash::hash_borsh_iter(validator_stakes)) < ---------step 2 is to compute bp_hash from the validator_stakes
+        Ok(CryptoHash::hash_borsh_iter(validator_stakes)) < ---------step
+        2
+        is
+        to
+        compute
+        bp_hash
+        from
+        the
+        validator_stakes
     } else {
         let validator_stakes = bps.into_iter().map(|(bp, _)| bp.into_v1());
-        Ok(CryptoHash::hash_borsh_iter(validator_stakes)) < ---------same step 2
+        Ok(CryptoHash::hash_borsh_iter(validator_stakes)) < ---------same
+        step
+        2
     }
 }
 
 ```
 
-Illustrative scheme ( full-size image [here](https://user-images.githubusercontent.com/58668238/284517560-69ad218f-13e9-47aa-9a59-cfecfbd6da70.png) ):
+Illustrative scheme ( full-size
+image [here](https://user-images.githubusercontent.com/58668238/284517560-69ad218f-13e9-47aa-9a59-cfecfbd6da70.png) ):
 
 ![image](https://github.com/ZpokenWeb3/zk-light-client-implementation/assets/58668238/69ad218f-13e9-47aa-9a59-cfecfbd6da70)
-
 
 1) Configure the account in the config.json file
 
 ```json
 {
   "block_hash": "EcqGW4G71aXD3TU1cMbLUiPnahFc15MkyBScTgUveGQz",
-  "network": 1,
+  "network": 1
   // 0 - for TESTNET, 1 for MAINNET
-
 }
 ```
 
@@ -93,27 +112,27 @@ Illustrative scheme ( full-size image [here](https://user-images.githubuserconte
 
 ```rust
     /// Calculates hash of a borsh-serialised representation of list of objects.
-    ///
-    /// This behaves as if it first collected all the items in the iterator into
-    /// a vector and then calculating hash of borsh-serialised representation of
-    /// that vector.
-    ///
-    /// Panics if the iterator lies about its length.
-    pub fn hash_borsh_iter<I>(values: I) -> CryptoHash
+///
+/// This behaves as if it first collected all the items in the iterator into
+/// a vector and then calculating hash of borsh-serialised representation of
+/// that vector.
+///
+/// Panics if the iterator lies about its length.
+pub fn hash_borsh_iter<I>(values: I) -> CryptoHash
     where
         I: IntoIterator,
         I::IntoIter: ExactSizeIterator,
         I::Item: BorshSerialize,
-    {
-        let iter = values.into_iter();
-        let n = u32::try_from(iter.len()).unwrap();
-        let mut hasher = sha2::Sha256::default();
-        hasher.write_all(&n.to_le_bytes()).unwrap();
-        let count =
-            iter.inspect(|value| BorshSerialize::serialize(&value, &mut hasher).unwrap()).count();
-        assert_eq!(n as usize, count);
-        CryptoHash(hasher.finalize().into())
-    }
+{
+    let iter = values.into_iter();
+    let n = u32::try_from(iter.len()).unwrap();
+    let mut hasher = sha2::Sha256::default();
+    hasher.write_all(&n.to_le_bytes()).unwrap();
+    let count =
+        iter.inspect(|value| BorshSerialize::serialize(&value, &mut hasher).unwrap()).count();
+    assert_eq!(n as usize, count);
+    CryptoHash(hasher.finalize().into())
+}
 ```
 
 ##### so we can see there is two steps:
@@ -125,78 +144,78 @@ The code is the following:
 
 ```rust
     let iter = validator_stakes;
-    let n = u32::try_from(iter.len()).unwrap();
-    let mut hasher = sha2::Sha256::default();
-    let mut len_bytes = n.to_le_bytes().try_to_vec().unwrap();
-    let mut final_bytes: Vec<u8> = vec![];
-    let mut experimental_validators_ordered_bytes: Vec<u8> = vec![];
+let n = u32::try_from(iter.len()).unwrap();
+let mut hasher = sha2::Sha256::default ();
+let mut len_bytes = n.to_le_bytes().try_to_vec().unwrap();
+let mut final_bytes: Vec<u8> = vec![];
+let mut experimental_validators_ordered_bytes: Vec<u8> = vec![];
 
-    final_bytes.append(&mut len_bytes);
+final_bytes.append( & mut len_bytes);
 
-    hasher.write_all(&n.to_le_bytes()).unwrap();
+hasher.write_all( & n.to_le_bytes()).unwrap();
 
-    writeln!(
-        file_next_bp_hash_proving,
-        "First part of the hashing: EXPERIMENTAL_validators_ordered len in bytes: {:?}\n\n",
-        n.to_le_bytes().try_to_vec().unwrap()
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_next_bp_hash_proving,
+    "First part of the hashing: EXPERIMENTAL_validators_ordered len in bytes: {:?}\n\n",
+    n.to_le_bytes().try_to_vec().unwrap()
+)
+.expect("Unable to write to file");
 
-    let count = iter
-        .inspect(|value| {
-            writeln!(file_validator_bytes_representation, "{:?}\naccount_id bytes: {:?}\npublic key bytes: {:?}\nstake bytes: {:?}\nwhole byte representation in bytes:  {:?}\n\n",
-                     value,
-                     BorshSerialize::try_to_vec(&value.account_id()).unwrap(),
-                     BorshSerialize::try_to_vec(&value.public_key()).unwrap(),
-                     BorshSerialize::try_to_vec(&value.stake()).unwrap(),
-                     BorshSerialize::try_to_vec(&value).unwrap())
-                .expect("Unable to write to file");
-            final_bytes.append(&mut BorshSerialize::try_to_vec(&value).unwrap());
-            experimental_validators_ordered_bytes.append(&mut BorshSerialize::try_to_vec(&value).unwrap());
-            BorshSerialize::serialize(&value, &mut hasher).unwrap()
-        })
-        .count();   
+let count = iter
+.inspect( | value| {
+writeln ! (file_validator_bytes_representation, "{:?}\naccount_id bytes: {:?}\npublic key bytes: {:?}\nstake bytes: {:?}\nwhole byte representation in bytes:  {:?}\n\n",
+value,
+BorshSerialize::try_to_vec( & value.account_id()).unwrap(),
+BorshSerialize::try_to_vec( &value.public_key()).unwrap(),
+BorshSerialize::try_to_vec( & value.stake()).unwrap(),
+BorshSerialize::try_to_vec( & value).unwrap())
+.expect("Unable to write to file");
+final_bytes.append( &mut BorshSerialize::try_to_vec( & value).unwrap());
+experimental_validators_ordered_bytes.append( & mut BorshSerialize::try_to_vec( & value).unwrap());
+BorshSerialize::serialize( & value, & mut hasher).unwrap()
+})
+.count();
 
-    assert_eq!(n as usize, count);
+assert_eq!(n as usize, count);
 
-    let computed_bp_hash = CryptoHash(hasher.clone().finalize().into());
+let computed_bp_hash = CryptoHash(hasher.clone().finalize().into());
 
-    // -------------- next_bp_hash calculation results output --------------
+// -------------- next_bp_hash calculation results output --------------
 
-    writeln!(
-        file_next_bp_hash_proving,
-        "Second part of the hashing EXPERIMENTAL_validators_ordered as ValidatorStake: {:?}\n\n",
-        experimental_validators_ordered_bytes
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_next_bp_hash_proving,
+    "Second part of the hashing EXPERIMENTAL_validators_ordered as ValidatorStake: {:?}\n\n",
+    experimental_validators_ordered_bytes
+)
+.expect("Unable to write to file");
 
-    writeln!(
-        file_next_bp_hash_proving,
-        "EXPERIMENTAL_validators_ordered input array of bytes: {:?}\n\n",
-        final_bytes
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_next_bp_hash_proving,
+    "EXPERIMENTAL_validators_ordered input array of bytes: {:?}\n\n",
+    final_bytes
+)
+.expect("Unable to write to file");
 
-    writeln!(
-        file_validator_bytes_representation,
-        "EXPERIMENTAL_validators_ordered input array of bytes: {:?}",
-        final_bytes
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_validator_bytes_representation,
+    "EXPERIMENTAL_validators_ordered input array of bytes: {:?}",
+    final_bytes
+)
+.expect("Unable to write to file");
 
-    writeln!(
-        file_next_bp_hash_proving,
-        "Computed BP hash in bytes: {:?}\n\n",
-        hasher.clone().finalize().bytes()
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_next_bp_hash_proving,
+    "Computed BP hash in bytes: {:?}\n\n",
+    hasher.clone().finalize().bytes()
+)
+.expect("Unable to write to file");
 
-    writeln!(
-        file_next_bp_hash_proving,
-        "Computed BP hash {:?}\n\n",
-        computed_bp_hash
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_next_bp_hash_proving,
+    "Computed BP hash {:?}\n\n",
+    computed_bp_hash
+)
+.expect("Unable to write to file");
 ```
 
 So we have all the parts of the hashing in HEX and byte representation in `next_bp_hash_proving.txt`:
@@ -241,53 +260,53 @@ EXPERIMENTAL_validators_ordered input array of bytes: [100, 0, 0, 0, 0, 18, 0, 0
 ```rust
     const BLOCKS_IN_EPOCH: u128 = 43_200;
 
-    let previous_epoch_block_height = current_block_height - BLOCKS_IN_EPOCH;
+let previous_epoch_block_height = current_block_height - BLOCKS_IN_EPOCH;
 
-    let previous_epoch_block_request = BlockRequestByHeight {
-        jsonrpc: "2.0",
-        id: "dontcare",
-        method: "block",
-        params: BlockParamHeight {
-            block_id: previous_epoch_block_height,
-        },
-    };
+let previous_epoch_block_request = BlockRequestByHeight {
+jsonrpc: "2.0",
+id: "dontcare",
+method: "block",
+params: BlockParamHeight {
+block_id: previous_epoch_block_height,
+},
+};
 
-    let previous_epoch_block_response: BlockResponse = client
-        .post(rpc_url)
-        .json(&previous_epoch_block_request)
-        .send()
-        .await?
-        .json()
-        .await?;
+let previous_epoch_block_response: BlockResponse = client
+.post(rpc_url)
+.json( & previous_epoch_block_request)
+.send()
+.await?
+.json()
+.await?;
 
-    writeln!(
-        file_next_bp_hash_proving,
-        "Previous epoch block  {:?}\n\n",
-        previous_epoch_block_response.result.header
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_next_bp_hash_proving,
+    "Previous epoch block  {:?}\n\n",
+    previous_epoch_block_response.result.header
+)
+.expect("Unable to write to file");
 
-    writeln!(
-        file_next_bp_hash_proving,
-        "computed hash {} == {} stored hash in previous epoch block",
-        computed_bp_hash, previous_epoch_block_response.result.header.next_bp_hash
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_next_bp_hash_proving,
+    "computed hash {} == {} stored hash in previous epoch block",
+    computed_bp_hash, previous_epoch_block_response.result.header.next_bp_hash
+)
+.expect("Unable to write to file");
 ```
 
 5) Output formatted for convenience:
 
 ```rust
-Previous epoch block  
-BlockHeaderView { 
-    height: 105020984,
-    prev_height: Some(105020983), 
-    epoch_id: 3PwKJ5H89tNzEJ5RHdajdDGDzj3Qj1foLdBXLAkjFc2T, n
-    hash: MS3Py35EENSn3K2YpCmn8krrnFDmbKEQcNkZJVBMhFq, 
-    ...
-    next_bp_hash: 83HaisA6gp918hgptQkSUyo2Xnvfeaim9LgfLVMPEuU6, <--------- desired field 
-    block_merkle_root: 4PgT3HCocHTqbckf9Kn8n9fJa6DByPxLrCdaE3v93SAf,
-    ...
+Previous epoch block
+BlockHeaderView {
+height: 105020984,
+prev_height: Some(105020983),
+epoch_id: 3PwKJ5H89tNzEJ5RHdajdDGDzj3Qj1foLdBXLAkjFc2T, n
+hash: MS3Py35EENSn3K2YpCmn8krrnFDmbKEQcNkZJVBMhFq,
+...
+next_bp_hash: 83HaisA6gp918hgptQkSUyo2Xnvfeaim9LgfLVMPEuU6, < - - - - - - - - - desired field
+block_merkle_root: 4PgT3HCocHTqbckf9Kn8n9fJa6DByPxLrCdaE3v93SAf,
+...
 
 computed hash 83HaisA6gp918hgptQkSUyo2Xnvfeaim9LgfLVMPEuU6 == 83HaisA6gp918hgptQkSUyo2Xnvfeaim9LgfLVMPEuU6 stored hash in previous epoch block
 ```
@@ -303,88 +322,88 @@ Proving block hash calculation
 
 ```rust
     let block_request = BlockRequest {
-        jsonrpc: "2.0",
-        id: "dontcare",
-        method: "block",
-        params: BlockParamString {
-            block_id: block_hash.parse().unwrap(),
-        },
-    };
+jsonrpc: "2.0",
+id: "dontcare",
+method: "block",
+params: BlockParamString {
+block_id: block_hash.parse().unwrap(),
+},
+};
 
-    let block_response: BlockResponse = client
-        .post(rpc_url)
-        .json(&block_request)
-        .send()
-        .await?
-        .json()
-        .await?;
+let block_response: BlockResponse = client
+.post(rpc_url)
+.json( & block_request)
+.send()
+.await?
+.json()
+.await?;
 
-    writeln!(file_block_hash_proving, "block hash PROVING\n\n", ).expect("Unable to write to file");
+writeln!(file_block_hash_proving, "block hash PROVING\n\n", ).expect("Unable to write to file");
 
-    writeln!(
-        file_block_hash_proving,
-        "Current block BlockHeaderView:\t{:?}\n\n",
-        block_response.result.header,
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_block_hash_proving,
+    "Current block BlockHeaderView:\t{:?}\n\n",
+    block_response.result.header,
+)
+.expect("Unable to write to file");
 
-    let block_header_inner_lite_view_json_data = serde_json::to_string(
-        &BlockHeader::from(block_response.result.header.clone()),
-    )
-        .unwrap();
+let block_header_inner_lite_view_json_data = serde_json::to_string(
+& BlockHeader::from(block_response.result.header.clone()),
+)
+.unwrap();
 
-    file_block_header_json
-        .write_all(block_header_inner_lite_view_json_data.as_bytes())
-        .unwrap();
+file_block_header_json
+.write_all(block_header_inner_lite_view_json_data.as_bytes())
+.unwrap();
 
-    writeln!(
-        file_block_hash_proving,
-        "Current block that are used for calculating block hash BlockHeaderInnerLiteView:  {:?}\n\n",
-        &BlockHeaderInnerLiteView::from(BlockHeader::from(block_response.result.header.clone()))
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_block_hash_proving,
+    "Current block that are used for calculating block hash BlockHeaderInnerLiteView:  {:?}\n\n",
+    &BlockHeaderInnerLiteView::from(BlockHeader::from(block_response.result.header.clone()))
+)
+.expect("Unable to write to file");
 
-    writeln!(
-        file_block_hash_proving,
-        "Current block that are used for calculating block hash in bytes BlockHeaderInnerLiteView:  {:?}\n\n",
-        BorshSerialize::try_to_vec(&BlockHeaderInnerLiteView::from(BlockHeader::from(block_response.result.header.clone()))).unwrap(),
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_block_hash_proving,
+    "Current block that are used for calculating block hash in bytes BlockHeaderInnerLiteView:  {:?}\n\n",
+    BorshSerialize::try_to_vec(&BlockHeaderInnerLiteView::from(BlockHeader::from(block_response.result.header.clone()))).unwrap(),
+)
+.expect("Unable to write to file");
 
-    writeln!(
-        file_block_hash_proving,
-        "Current block next_bp_hash in bytes: {:?}\n\n",
-        BorshSerialize::try_to_vec(&block_response.result.header.next_bp_hash).unwrap(),
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_block_hash_proving,
+    "Current block next_bp_hash in bytes: {:?}\n\n",
+    BorshSerialize::try_to_vec(&block_response.result.header.next_bp_hash).unwrap(),
+)
+.expect("Unable to write to file");
 
-    // -------------- block hash calculation from the BlockHeaderInnerLiteView structure --------------
+// -------------- block hash calculation from the BlockHeaderInnerLiteView structure --------------
 
-    let computed_block_hash =
-        block_hash_from_header(BlockHeader::from(block_response.result.header.clone()));
+let computed_block_hash =
+block_hash_from_header(BlockHeader::from(block_response.result.header.clone()));
 
-    // -------------- block hash calculation results output --------------
+// -------------- block hash calculation results output --------------
 
-    writeln!(
-        file_block_hash_proving,
-        "computed block hash in bytes {:?}\n\n",
-        BorshSerialize::try_to_vec(&computed_block_hash.unwrap()).unwrap(),
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_block_hash_proving,
+    "computed block hash in bytes {:?}\n\n",
+    BorshSerialize::try_to_vec(&computed_block_hash.unwrap()).unwrap(),
+)
+.expect("Unable to write to file");
 
-    writeln!(
-        file_block_hash_proving,
-        "Calculated block hash from BlockHeaderInnerLiteView {:?} == {:?} BlockHeaderView\n\n",
-        computed_block_hash.unwrap(),
-        block_response.result.header.hash,
-    )
-        .expect("Unable to write to file");
+writeln!(
+    file_block_hash_proving,
+    "Calculated block hash from BlockHeaderInnerLiteView {:?} == {:?} BlockHeaderView\n\n",
+    computed_block_hash.unwrap(),
+    block_response.result.header.hash,
+)
+.expect("Unable to write to file");
 
-    assert_eq!(
-        computed_block_hash.unwrap(),
-        block_response.result.header.hash,
-        "Computed block hash has to be equal to obtained from RPC BlockHeaderView\n\n"
-    );
+assert_eq!(
+    computed_block_hash.unwrap(),
+    block_response.result.header.hash,
+    "Computed block hash has to be equal to obtained from RPC BlockHeaderView\n\n"
+);
 
 ```
 
@@ -427,22 +446,22 @@ that calls `hash()` function on BlockHeader:
 
 ```rust
     #[inline]
-    pub fn hash(&self) -> &CryptoHash {
-        match self {
-            BlockHeader::BlockHeaderV1(header) => &header.hash,
-            BlockHeader::BlockHeaderV2(header) => &header.hash,
-            BlockHeader::BlockHeaderV3(header) => &header.hash,
-        }
+pub fn hash(&self) -> &CryptoHash {
+    match self {
+        BlockHeader::BlockHeaderV1(header) => &header.hash,
+        BlockHeader::BlockHeaderV2(header) => &header.hash,
+        BlockHeader::BlockHeaderV3(header) => &header.hash,
     }
-    
-    
+}
+
+
 impl BlockHeader {
     pub fn compute_inner_hash(inner_lite: &[u8], inner_rest: &[u8]) -> CryptoHash {
         let hash_lite = hash(inner_lite);
         let hash_rest = hash(inner_rest);
         combine_hash(&hash_lite, &hash_rest)
     }
-    
+
     pub fn compute_hash(prev_hash: CryptoHash, inner_lite: &[u8], inner_rest: &[u8]) -> CryptoHash {
         let hash_inner = BlockHeader::compute_inner_hash(inner_lite, inner_rest);
 
@@ -456,146 +475,146 @@ And the real data on which it operates:
 
 ```rust
 {
-  "BlockHeaderV3": {
-    "prev_hash": "3k2Qj8UggXnAgTkYrzNfUJUkcnCSKvuSujwrp1DJEf7Z",
-    "inner_lite": {
-      "height": 105064184,
-      "epoch_id": "FXcvd7hqftFEeej5rw6KbM2MwvtoCY8kPDfZutWzG1kL",
-      "next_epoch_id": "AButo2XNSBqvBfRjWkxp63XjUaPDiqqgN6SAYvbGV6b9",
-      "prev_state_root": "FSTpAhTuchLwmFxfJt5LLEMaCqHdeweAvjxgG89DkHEu",
-      "outcome_root": "C1Ufdg5ptC8P8E1iHaGnrSKGCSDpbNVfswJx1WDnnCSX",
-      "timestamp": 1699265390093869869,
-      "next_bp_hash": "E9m62CBWc3kufa2cMDaTspGQHyXZfnPuBTsNtSknHTa5",
-      "block_merkle_root": "2zhzQEwCuuePsNifdTgJiEvYVFFc9hBKTcfzeT67EHN1"
-    },
-    "inner_rest": {
-      "chunk_receipts_root": "FUsFRtffYFPxJMX84shhVyoRwVe2HF6abvVTBaw3YtWj",
-      "chunk_headers_root": "5XhkRCBY3Kkq4LjcwSyH3fVpMwcpRQ8DfvhB6bp3HUk4",
-      "chunk_tx_root": "BDQHtHENgeSKsXJWW3nCP1SXzURLeQaXux4B42H1qCt4",
-      "challenges_root": "11111111111111111111111111111111",
-      "random_value": "8NLkvz1gZ6QvxhpSSx7c9SdSboKyJUR7tSiVf3jDaYxL",
-      "validator_proposals": [],
-      "chunk_mask": [
-        true,
-        true,
-        true,
-        true
-      ],
-      "gas_price": 100000000,
-      "total_supply": 1161785754236643227402604307196561,
-      "challenges_result": [],
-      "last_final_block": "7is4EMRNJsacbqeo8s8sAUr9KTkazJdezfjFU1Rts59A",
-      "last_ds_final_block": "3k2Qj8UggXnAgTkYrzNfUJUkcnCSKvuSujwrp1DJEf7Z",
-      "block_ordinal": 95001123,
-      "prev_height": 105064183,
-      "epoch_sync_data_hash": null,
-      "approvals": [
-        "ed25519:4eLLYJWGHuAm8rFvcNP93HnoFjzt7JVDHJDoCgu6tYYgbCWVYbn259QozVA4y5i1ZuRkrydGwcFpjxZxBthndTF7",
-        "ed25519:3fwHU3vJEaY3UktsoXc9LBCjDvMuxd3MJtQMCgJRpFw364iRTQbhvyRnRUFWm88FgJngoC2HTieaBJ63YS4AdbLg",
-        "ed25519:5iyc1cGbdeBi9r2cGavVuPQ7k64wgJUgaAEZJXwqABPQj4rgb8sUCJxAKQArwUSRGSH75Sk8zJxQQjytbSpKHTcy",
-        "ed25519:dRKzkV53SaUyb2e9HTfq4wckwU3ioKNeRCPkcy5soXucCf7J5xtk9Rxj8SjJT3DgNs9cJKMhi6XXRh4XfscjB61",
-        "ed25519:5jbhT5RzGe6Jnj6RE3vXqberDVuaLuZUqG3Uocso7hifZSYV6spgMJ68aEcAZdgfTwhUs2pU9ZTi6rpxhq8DYE27",
-        null,
-        "ed25519:woAvEbGEkagwNLeZ5YApsgv2HrHZ9Td6cHZcScp29KcHAypL8AhkbX3THuKnAFt9JFAPQjoP2j6Px4PwX3tLHJ9",
-        null,
-        "ed25519:2bVeibxThgkmRdLEodxLyp43CotgV4yeSb26tMWUjGeYxaoFeL2gXkdLWJCvyFiCTUbAccjZ9dTUpSd8Bqy1WnYg",
-        "ed25519:2XJc2McVYKAnzp1fF2zgUsWYqYebdD5BjXUTMQcKU5oBsKdme3hMcvyy92WervZ1kWiAZGv2W1joncFgLdWRMq5b",
-        "ed25519:2aHW2h5M3ZwrDcPKKXpv6teaKbX8Cup6ZSJk9guYSduKzuf9R3LD1gwdGf8YqLwmV48bJ6qy22htjQwgFEoQ7RUr",
-        "ed25519:2jMBQZMWcbQG3VauCkrAXPe6KobhMtzcwXAuVPMYp4oAvEKbXDD2zD7XAJ4bKBJgvb5tCfxFffWtrHiQdE3ZXi1K",
-        "ed25519:5t1nv3oUkp8W6y3X2qM1hCAFW39BkGYMGyyYrjJBdjLERkcooLEarYzJCGnub626pjJ8PMyNVbEEeyFJBDWQb2uw",
-        "ed25519:b7gmgC8vNvjQdGSX5GmqFmFgZoBaxMzAhRi4hBkdHx8zVQZXwZnDvrUjKMpq9F5b2zxuShGVLGWGCtwmiefdZKT",
-        "ed25519:2J2JAxDDXd5qj6G9SmcKi6QScdcAipE7QJNFqxrFzh3jQDhkRDnjjETWiB3dg6vP7c4gRY7LP8EyZ6fS3DFmTArP",
-        "ed25519:5ud6oFrQa7Mgpz4XPDxETiw58iSQuC36kjbADBN1aRXNzBXhoY5vEwWNMxKB6aHMghBCYKRfNiR33CEhqSkjxwcd",
-        "ed25519:2Mz1EuWdMg1EFcPREAiYhoPGpJ4K8uE8EiCDiMG2TMp9pMBpbtcVCd7Lpkae9iscS3qHdhUHXrvR8dGhAtzujR9i",
-        null,
-        "ed25519:5FjUKjiQ1g7GK7GaJRZkzGaJtVUfsmeunQoeDu2JVJFHDCR7u75D25W8EXAhdA7vmQhysTYPp1gCmNYEEMdaQtAb",
-        "ed25519:2FHuW4PZRixC7sLUB868EgJLcwzmZ1Uq2CuRcmqMZeeV3CD5t4HQbuBTDYfGXBGgLXvbmTVqEmL1Rd1RKNvX846h",
-        null,
-        "ed25519:22yfYkUPRPi2ifZpE2MQRSyMNpaaFJMVm3TtRYSpKJvuKXgWbMDcD6EdML4YHPCtSzyLoTD6vLM7YuFSxWsb6WzT",
-        null,
-        "ed25519:4aMSRUJCfDESaxLUy4ywn5wk7XBWfQ3GkDWWpcnKPU5gnMS5qCiGh8EsPVnzfBSgfB4QPdxWbr4mLNvWyHeQtso8",
-        "ed25519:3HTCXYjyoBjnWUz2BKPg3TqHSubTPVYcE1nXidjkaDKswSx7d3MAaPAUfHiCbcBtnWYz1VdAnQesSAxWSkZjuYWR",
-        null,
-        null,
-        "ed25519:4NqVn4XoEynVoVAWFZU9E846nuHSs9sWJKvMtJyGq5gnyzW2xn46wRnzFJZq835KBLmuHLzoeBsud2tF5jdVjWxn",
-        "ed25519:2rjYGBW7S2nxbmUe3aZrvPiL1VS9j9913nvGqzM3Znrr7FfHnXMyaUvNn4NSCCsTi4HSPuiZQLPCSExcNjwdSDwo",
-        "ed25519:3WqZPHVqgEchrnBJsqptZD5WZoFuAe6Xpy9tAqHMvzeZxfjN3Y6T9z3FEefRn8YRGEJK8gPty8g6AjXUBofCKAv4",
-        "ed25519:4h7DkpD8Xu3gdxY17aNEmF42uLnVi3nRq5uF45ok8QaDD2wd1eC29mVbeVveBm8R67PHHAxHGd31S9qJYmdCtWUp",
-        null,
-        "ed25519:31vLuXv6ckPkRoeyGqBmvK3YZw6DAdvGEWjs8ugsvXnQgQNtwCVXLSm1ZM9gYgxYvnsYky855bTYWexrF2fVsYAD",
-        null,
-        null,
-        "ed25519:35NZEePfvfcpP7EYnpyeQWM577mnEVFUiyDaFYDysVWZAqZUXLU45wzUMSimc2kp4QBmRzWYAEYup1VUhsXFCvMn",
-        "ed25519:4XMpzVPZNAMBsRyDLonBo3wo6xB22T2ELC1cEALNHKgb3DLoAz4722GWaJwdTnvFfoC3vJM1GLzDtCd5gB32N5kZ",
-        null,
-        null,
-        "ed25519:2drCeiW1Mh1zrRVm1Pg5qivAv3ReZVdCcP6VHpQszsFFHRmA6p3muF4ppf8hBGQMhXKwww8G9roUdumnPwkr62fG",
-        "ed25519:3N9F3aGxKAN1uWDWMW5CMfrmhG8ySNeXK3GZQcgp6h8NzwWBAoxeCVBdqbeVVDSe8YoByHpsEYULEZxLZgDaHtEZ",
-        "ed25519:3sN1LXcjcSHqcPbpzPGYHRehuLviSUx2Z7tUe8YKcfqyW6SK4mU7vxW4W3CAkyCSYbv4TcuytjWsKpGFsUKH7Gur",
-        "ed25519:5TfdTPKkPKixc6mZYQX1mfP4BXvAXVNypR3v1ZW3bTqkE54D7Zwm2K9uixhkc4kQ5AyQomPY7UtUvoJJ2PkbJYED",
-        "ed25519:4rq9KTRDtM6Lw7Yq5Esa9DNYdVy7GTxGdHBuBN9BkycKW1hJN6VJRrgqvysWXkATQ4auExh6TNdAkeoGPQHMaxmf",
-        "ed25519:KNJYKTvWJVjcd7AiQeUPYVLC8cFdKbQw8hZnY16YKeduQgTL4Aiyun7zyTWkHSfkiwAEwgGvrZxtf1FYnkfrTb3",
-        "ed25519:4XYto5cmHd6ywsTRm1V5wm2USUnuqBhzs74Dyu4ZXxJkFtKoAXM8DfygwQNyzx7k92XJhuyPHW7oS5UNWYUPC4ZW",
-        "ed25519:59FdLEUDQurpkwjN8CdgQSmctVPgiZvsFcE1KSuFYR4Qnpj69XGTpSHuUPnw2UjhprmxYhWDLevzJqyXLrV5WweD",
-        "ed25519:oSaiWZ7AM5mw4Yycc79hPead9qTc3AxarSxMi7izhV9jVmEWeNa2YS9R3w1C53WGuTBPMsMDLY3bnGy9uvNmaJs",
-        "ed25519:hjqHpU7WvBR8gEqQBtfwMzbxYQHnZLQzDKhYythzMJeVvPnNSaRCLGTmFAtpDVCoV9rLhWXy9NwkRNjY9xL5hju",
-        "ed25519:3aUHKpXp7dzX9PM59qt1JbUtVL8HeWhxQxWJGJXE11EJn68EsD5omSmjRmXtr4XnxaxPemYNJdSvwAtu8uNjXpx6",
-        "ed25519:59K8WGcGyGwgBPKHDznbNE1hvD1vcw54VBS47bGAgKH1yC4fW4kd4QVAGdF7F4yMuoU4m1YcpMK82ArQaVTaTper",
-        "ed25519:2Ay3RWiNVAENRRGEzAyEzwfNcMWo6W8ShBwqFJ4mnqpEDWb18HAMCmCbgmS5Pu3be62JtGBgTX9VCHq5WySHMS2B",
-        "ed25519:67WDPScrXUPFuJvBQHaNrv1A5rQjdmFxpMH36VkcqdDxJPp26jfTjhFRsDARjYebdTL1Pgt8kt8NmFzVi7n2kUZQ",
-        null,
-        "ed25519:5GVUEv6kbGhVoocMBXXqnoTv981SCiATQEJQ8kvXy9fU7X9ipVjKgf6UJ5LkUjpJ7RqW464CRarCZGELWQKy8VXu",
-        "ed25519:419yKcVnDbfnCJynU1BH7XBjDE4b26Y2XaUn8kPeRXUiqSeXkxaoKyfcwb23qtbsJhwdX6Qh6pcysUgWHG2dNdPQ",
-        "ed25519:k6AcsFxue9rbQPCGH7RkN8c7p6GbvEFErJR2MgL21VPN1XQb4MAHyW9sud2zLCZnvUKfHPnb9g2vftjWQqgPEYL",
-        null,
-        "ed25519:2vCBrr3vA5CbVMv3cwuLcW6cjxZT8hxt4fEs9SeHcDbs8eAuCVP3fyGMBcyeQft5vyFGh4Mqxt2kExvHpKBwcSo4",
-        "ed25519:4ASHFbzuAThveidwMZJmhDeMftHs8sf3k3sQKdtc8hkrMtx73JyJ5SgpztU5GvxyE1EURStzSu7boxgRLL1MPKxL",
-        null,
-        null,
-        "ed25519:MC9DHm18eDCw7KA9jMbk55juCWKoKR7i5inu4ovoxiP3CKF7eX7tTPftE5FfBD88LmmYPZpuu53nCJ6bR3byrv9",
-        null,
-        "ed25519:3Rapq9Tom3zVvoZRksvirDkT6LiHkn2Dkg2ZZghXJ3xPEzGsBbEttjmJk5kMeyW4kKyUsRug3WuZ82rCkDQ7j63L",
-        null,
-        null,
-        "ed25519:2hipc7wBVvEfR7UGp9b5pYfKcocS1LYttMBY1emis6dG4SH2G6sXh2FKpz41HEDXbG3WVn7x9UmBsuAiq3SMLNDB",
-        null,
-        "ed25519:2opdWGeacK9ycJJr8t1sQ5yx7hYay8kYBHqC9wHkN7MLoba23Gip1zjm1zX29YgeR31AEJQfFwUnVFL31azVk6qN",
-        null,
-        "ed25519:3duik56zMJSCP7NrQpVSGn5x68CZaDYs8dDZim95eiDtdrADwyKvKqAVHngYcA8twdTwt9yP52UDgN1u7sEFEksb",
-        null,
-        null,
-        null,
-        null,
-        "ed25519:3zAA1bAtEyfm2476nE62CEvJFVKNgGcDrc9rDwptHrcmYRUHF9TjUpGoxvRkWUTtZphw6QBatQVaPJg9xTwCaUMU",
-        "ed25519:4hsKxp2hsK6ivAP1xLK6wvRYiWyjqmqKjHhqXS469GRm1N328yeQApeDzLHTeyBs7sY5aCfETCQFKBKUAvBjzoqk",
-        "ed25519:3YHSo5fTFSdNmC374JZCSioqhJVAdwUfmaHZtSufWqPt7HsSmiPb6GkCkebhVaGBnGcywc5T6iDRvoEznvUpecyD",
-        null,
-        "ed25519:6UAD86Jebg8uhzi4WDUyBVRSuaDKfLf2HWC1wBNYgHo8XgpNa6zpzT7ZBHw534DeFz9egbC6HGDRJKhnhq8UBGC",
-        "ed25519:4Q43uq8K2RctbUXkobCcHi1QXzcowyaMNbGP3dNC1FnXCFsCRzw9aqMUPcuPn86SnoaGmWc1mfUK8iMkR4LXW9kg",
-        "ed25519:63HGyZnf5mwgcc8m1Srq1kE6YNAJBiR6pNL3hiAr4YMXuUN4zxWB1EqB3PfHjKwNoEfuub2E8sqo2D9Tb6jAbW7",
-        null,
-        "ed25519:UFu7KRvBT11wU6MfdQzgkB1FqA776vgZS3Abbp3mdtdisg1i9fs1vx3934q1mxCSzVu2S5Rz4Bf2WRm7nNuTCDH",
-        "ed25519:5GNZbG7eZiGjgpPZTA75coYKKMWyc8XpsQMrFVq6LkvqsydeZmPYiCTfCawUDfckeMVGSYpyvA6whTMW6Q1Jo13L",
-        null,
-        "ed25519:4qzWRGQKp1daVcrL6uxMvE8Zg2VSiMxmZxjeo3bPAidz2V3bYD9JPLL48Kj4mMLS47z1NaaGDArtDVgTNCa3729f",
-        null,
-        "ed25519:3jfcZLDBWrFBUrV6n9FYbzmgt7zzC5Uhp9rNEAoQ8fNxZ28DrrNN8sUXjhVgn9RKPvvM6qkJ88SAvSjivzMN72nn",
-        null,
-        "ed25519:vYCKNA2TDjEFiDJyyTHPicd3TfFN2emT1yasWnGKYDjhtp9Gz1pysayr3GS3hKSUpqujhDpayYqhuvfshF8MNWm",
-        "ed25519:5TAp3eEFUt9W7exbcb1w4xjk5ddNLbCvnKbUaz5m8YZdFujCtDB2Y6ei4iouGySpovF8msnredocZZaMJgBSdbaP",
-        "ed25519:4baVZpuzX43kWpu4AtHkc7vejZ98KsLQsARJSngfLcEt7F4mX6rZNLosjtyjVKBLrJJ19G2k4WEAnpGEoVShcsVM",
-        "ed25519:4NaZ2Z43qC23MYU991wu6be2bfr6gNUBb7tjdnkB4n2BL8LRWsSnJiDjWsE7ds2ZCm4L7AfZrt8TcVdNvm9Wcz6Z",
-        "ed25519:5Fm2xeoLnM9FW85HRGRQY8xVSa2REqGze89Hmx9SQ1cxuESgyxigiZKFMh9Wj86MQCkYgUynWhnFx3MDPFxhiZy9",
-        null,
-        "ed25519:5AQfsyZxqzxVi1XaCfrzC78xfgzuZT857t55WXwjAk6zMr2XzGHJJpQZMLUEMXrUy9w4ZTyrMwmdwF5ZS5KDNtcb",
-        "ed25519:1onjc75mvHDg4VAdPbxSCtVtA2Ru1NprMXAw6kuyex5YAVPqYANUBmWcvFDy9B7khom5Zxd41MCV45F5zZcAt9y",
-        null
-      ],
-      "latest_protocol_version": 62
-    },
-    "signature": "ed25519:2CSZRoKG7Bh1nmHokgrD91LZvsNZeqrCjqTGrBMcMiHUwodVM2vLnVv27qNvZHvSDBdrRKNdgyocCXDm6k6epj5j",
-    "hash": "EcqGW4G71aXD3TU1cMbLUiPnahFc15MkyBScTgUveGQz"
-  }
+"BlockHeaderV3": {
+"prev_hash": "3k2Qj8UggXnAgTkYrzNfUJUkcnCSKvuSujwrp1DJEf7Z",
+"inner_lite": {
+"height": 105064184,
+"epoch_id": "FXcvd7hqftFEeej5rw6KbM2MwvtoCY8kPDfZutWzG1kL",
+"next_epoch_id": "AButo2XNSBqvBfRjWkxp63XjUaPDiqqgN6SAYvbGV6b9",
+"prev_state_root": "FSTpAhTuchLwmFxfJt5LLEMaCqHdeweAvjxgG89DkHEu",
+"outcome_root": "C1Ufdg5ptC8P8E1iHaGnrSKGCSDpbNVfswJx1WDnnCSX",
+"timestamp": 1699265390093869869,
+"next_bp_hash": "E9m62CBWc3kufa2cMDaTspGQHyXZfnPuBTsNtSknHTa5",
+"block_merkle_root": "2zhzQEwCuuePsNifdTgJiEvYVFFc9hBKTcfzeT67EHN1"
+},
+"inner_rest": {
+"chunk_receipts_root": "FUsFRtffYFPxJMX84shhVyoRwVe2HF6abvVTBaw3YtWj",
+"chunk_headers_root": "5XhkRCBY3Kkq4LjcwSyH3fVpMwcpRQ8DfvhB6bp3HUk4",
+"chunk_tx_root": "BDQHtHENgeSKsXJWW3nCP1SXzURLeQaXux4B42H1qCt4",
+"challenges_root": "11111111111111111111111111111111",
+"random_value": "8NLkvz1gZ6QvxhpSSx7c9SdSboKyJUR7tSiVf3jDaYxL",
+"validator_proposals": [],
+"chunk_mask": [
+true,
+true,
+true,
+true
+],
+"gas_price": 100000000,
+"total_supply": 1161785754236643227402604307196561,
+"challenges_result": [],
+"last_final_block": "7is4EMRNJsacbqeo8s8sAUr9KTkazJdezfjFU1Rts59A",
+"last_ds_final_block": "3k2Qj8UggXnAgTkYrzNfUJUkcnCSKvuSujwrp1DJEf7Z",
+"block_ordinal": 95001123,
+"prev_height": 105064183,
+"epoch_sync_data_hash": null,
+"approvals": [
+"ed25519:4eLLYJWGHuAm8rFvcNP93HnoFjzt7JVDHJDoCgu6tYYgbCWVYbn259QozVA4y5i1ZuRkrydGwcFpjxZxBthndTF7",
+"ed25519:3fwHU3vJEaY3UktsoXc9LBCjDvMuxd3MJtQMCgJRpFw364iRTQbhvyRnRUFWm88FgJngoC2HTieaBJ63YS4AdbLg",
+"ed25519:5iyc1cGbdeBi9r2cGavVuPQ7k64wgJUgaAEZJXwqABPQj4rgb8sUCJxAKQArwUSRGSH75Sk8zJxQQjytbSpKHTcy",
+"ed25519:dRKzkV53SaUyb2e9HTfq4wckwU3ioKNeRCPkcy5soXucCf7J5xtk9Rxj8SjJT3DgNs9cJKMhi6XXRh4XfscjB61",
+"ed25519:5jbhT5RzGe6Jnj6RE3vXqberDVuaLuZUqG3Uocso7hifZSYV6spgMJ68aEcAZdgfTwhUs2pU9ZTi6rpxhq8DYE27",
+null,
+"ed25519:woAvEbGEkagwNLeZ5YApsgv2HrHZ9Td6cHZcScp29KcHAypL8AhkbX3THuKnAFt9JFAPQjoP2j6Px4PwX3tLHJ9",
+null,
+"ed25519:2bVeibxThgkmRdLEodxLyp43CotgV4yeSb26tMWUjGeYxaoFeL2gXkdLWJCvyFiCTUbAccjZ9dTUpSd8Bqy1WnYg",
+"ed25519:2XJc2McVYKAnzp1fF2zgUsWYqYebdD5BjXUTMQcKU5oBsKdme3hMcvyy92WervZ1kWiAZGv2W1joncFgLdWRMq5b",
+"ed25519:2aHW2h5M3ZwrDcPKKXpv6teaKbX8Cup6ZSJk9guYSduKzuf9R3LD1gwdGf8YqLwmV48bJ6qy22htjQwgFEoQ7RUr",
+"ed25519:2jMBQZMWcbQG3VauCkrAXPe6KobhMtzcwXAuVPMYp4oAvEKbXDD2zD7XAJ4bKBJgvb5tCfxFffWtrHiQdE3ZXi1K",
+"ed25519:5t1nv3oUkp8W6y3X2qM1hCAFW39BkGYMGyyYrjJBdjLERkcooLEarYzJCGnub626pjJ8PMyNVbEEeyFJBDWQb2uw",
+"ed25519:b7gmgC8vNvjQdGSX5GmqFmFgZoBaxMzAhRi4hBkdHx8zVQZXwZnDvrUjKMpq9F5b2zxuShGVLGWGCtwmiefdZKT",
+"ed25519:2J2JAxDDXd5qj6G9SmcKi6QScdcAipE7QJNFqxrFzh3jQDhkRDnjjETWiB3dg6vP7c4gRY7LP8EyZ6fS3DFmTArP",
+"ed25519:5ud6oFrQa7Mgpz4XPDxETiw58iSQuC36kjbADBN1aRXNzBXhoY5vEwWNMxKB6aHMghBCYKRfNiR33CEhqSkjxwcd",
+"ed25519:2Mz1EuWdMg1EFcPREAiYhoPGpJ4K8uE8EiCDiMG2TMp9pMBpbtcVCd7Lpkae9iscS3qHdhUHXrvR8dGhAtzujR9i",
+null,
+"ed25519:5FjUKjiQ1g7GK7GaJRZkzGaJtVUfsmeunQoeDu2JVJFHDCR7u75D25W8EXAhdA7vmQhysTYPp1gCmNYEEMdaQtAb",
+"ed25519:2FHuW4PZRixC7sLUB868EgJLcwzmZ1Uq2CuRcmqMZeeV3CD5t4HQbuBTDYfGXBGgLXvbmTVqEmL1Rd1RKNvX846h",
+null,
+"ed25519:22yfYkUPRPi2ifZpE2MQRSyMNpaaFJMVm3TtRYSpKJvuKXgWbMDcD6EdML4YHPCtSzyLoTD6vLM7YuFSxWsb6WzT",
+null,
+"ed25519:4aMSRUJCfDESaxLUy4ywn5wk7XBWfQ3GkDWWpcnKPU5gnMS5qCiGh8EsPVnzfBSgfB4QPdxWbr4mLNvWyHeQtso8",
+"ed25519:3HTCXYjyoBjnWUz2BKPg3TqHSubTPVYcE1nXidjkaDKswSx7d3MAaPAUfHiCbcBtnWYz1VdAnQesSAxWSkZjuYWR",
+null,
+null,
+"ed25519:4NqVn4XoEynVoVAWFZU9E846nuHSs9sWJKvMtJyGq5gnyzW2xn46wRnzFJZq835KBLmuHLzoeBsud2tF5jdVjWxn",
+"ed25519:2rjYGBW7S2nxbmUe3aZrvPiL1VS9j9913nvGqzM3Znrr7FfHnXMyaUvNn4NSCCsTi4HSPuiZQLPCSExcNjwdSDwo",
+"ed25519:3WqZPHVqgEchrnBJsqptZD5WZoFuAe6Xpy9tAqHMvzeZxfjN3Y6T9z3FEefRn8YRGEJK8gPty8g6AjXUBofCKAv4",
+"ed25519:4h7DkpD8Xu3gdxY17aNEmF42uLnVi3nRq5uF45ok8QaDD2wd1eC29mVbeVveBm8R67PHHAxHGd31S9qJYmdCtWUp",
+null,
+"ed25519:31vLuXv6ckPkRoeyGqBmvK3YZw6DAdvGEWjs8ugsvXnQgQNtwCVXLSm1ZM9gYgxYvnsYky855bTYWexrF2fVsYAD",
+null,
+null,
+"ed25519:35NZEePfvfcpP7EYnpyeQWM577mnEVFUiyDaFYDysVWZAqZUXLU45wzUMSimc2kp4QBmRzWYAEYup1VUhsXFCvMn",
+"ed25519:4XMpzVPZNAMBsRyDLonBo3wo6xB22T2ELC1cEALNHKgb3DLoAz4722GWaJwdTnvFfoC3vJM1GLzDtCd5gB32N5kZ",
+null,
+null,
+"ed25519:2drCeiW1Mh1zrRVm1Pg5qivAv3ReZVdCcP6VHpQszsFFHRmA6p3muF4ppf8hBGQMhXKwww8G9roUdumnPwkr62fG",
+"ed25519:3N9F3aGxKAN1uWDWMW5CMfrmhG8ySNeXK3GZQcgp6h8NzwWBAoxeCVBdqbeVVDSe8YoByHpsEYULEZxLZgDaHtEZ",
+"ed25519:3sN1LXcjcSHqcPbpzPGYHRehuLviSUx2Z7tUe8YKcfqyW6SK4mU7vxW4W3CAkyCSYbv4TcuytjWsKpGFsUKH7Gur",
+"ed25519:5TfdTPKkPKixc6mZYQX1mfP4BXvAXVNypR3v1ZW3bTqkE54D7Zwm2K9uixhkc4kQ5AyQomPY7UtUvoJJ2PkbJYED",
+"ed25519:4rq9KTRDtM6Lw7Yq5Esa9DNYdVy7GTxGdHBuBN9BkycKW1hJN6VJRrgqvysWXkATQ4auExh6TNdAkeoGPQHMaxmf",
+"ed25519:KNJYKTvWJVjcd7AiQeUPYVLC8cFdKbQw8hZnY16YKeduQgTL4Aiyun7zyTWkHSfkiwAEwgGvrZxtf1FYnkfrTb3",
+"ed25519:4XYto5cmHd6ywsTRm1V5wm2USUnuqBhzs74Dyu4ZXxJkFtKoAXM8DfygwQNyzx7k92XJhuyPHW7oS5UNWYUPC4ZW",
+"ed25519:59FdLEUDQurpkwjN8CdgQSmctVPgiZvsFcE1KSuFYR4Qnpj69XGTpSHuUPnw2UjhprmxYhWDLevzJqyXLrV5WweD",
+"ed25519:oSaiWZ7AM5mw4Yycc79hPead9qTc3AxarSxMi7izhV9jVmEWeNa2YS9R3w1C53WGuTBPMsMDLY3bnGy9uvNmaJs",
+"ed25519:hjqHpU7WvBR8gEqQBtfwMzbxYQHnZLQzDKhYythzMJeVvPnNSaRCLGTmFAtpDVCoV9rLhWXy9NwkRNjY9xL5hju",
+"ed25519:3aUHKpXp7dzX9PM59qt1JbUtVL8HeWhxQxWJGJXE11EJn68EsD5omSmjRmXtr4XnxaxPemYNJdSvwAtu8uNjXpx6",
+"ed25519:59K8WGcGyGwgBPKHDznbNE1hvD1vcw54VBS47bGAgKH1yC4fW4kd4QVAGdF7F4yMuoU4m1YcpMK82ArQaVTaTper",
+"ed25519:2Ay3RWiNVAENRRGEzAyEzwfNcMWo6W8ShBwqFJ4mnqpEDWb18HAMCmCbgmS5Pu3be62JtGBgTX9VCHq5WySHMS2B",
+"ed25519:67WDPScrXUPFuJvBQHaNrv1A5rQjdmFxpMH36VkcqdDxJPp26jfTjhFRsDARjYebdTL1Pgt8kt8NmFzVi7n2kUZQ",
+null,
+"ed25519:5GVUEv6kbGhVoocMBXXqnoTv981SCiATQEJQ8kvXy9fU7X9ipVjKgf6UJ5LkUjpJ7RqW464CRarCZGELWQKy8VXu",
+"ed25519:419yKcVnDbfnCJynU1BH7XBjDE4b26Y2XaUn8kPeRXUiqSeXkxaoKyfcwb23qtbsJhwdX6Qh6pcysUgWHG2dNdPQ",
+"ed25519:k6AcsFxue9rbQPCGH7RkN8c7p6GbvEFErJR2MgL21VPN1XQb4MAHyW9sud2zLCZnvUKfHPnb9g2vftjWQqgPEYL",
+null,
+"ed25519:2vCBrr3vA5CbVMv3cwuLcW6cjxZT8hxt4fEs9SeHcDbs8eAuCVP3fyGMBcyeQft5vyFGh4Mqxt2kExvHpKBwcSo4",
+"ed25519:4ASHFbzuAThveidwMZJmhDeMftHs8sf3k3sQKdtc8hkrMtx73JyJ5SgpztU5GvxyE1EURStzSu7boxgRLL1MPKxL",
+null,
+null,
+"ed25519:MC9DHm18eDCw7KA9jMbk55juCWKoKR7i5inu4ovoxiP3CKF7eX7tTPftE5FfBD88LmmYPZpuu53nCJ6bR3byrv9",
+null,
+"ed25519:3Rapq9Tom3zVvoZRksvirDkT6LiHkn2Dkg2ZZghXJ3xPEzGsBbEttjmJk5kMeyW4kKyUsRug3WuZ82rCkDQ7j63L",
+null,
+null,
+"ed25519:2hipc7wBVvEfR7UGp9b5pYfKcocS1LYttMBY1emis6dG4SH2G6sXh2FKpz41HEDXbG3WVn7x9UmBsuAiq3SMLNDB",
+null,
+"ed25519:2opdWGeacK9ycJJr8t1sQ5yx7hYay8kYBHqC9wHkN7MLoba23Gip1zjm1zX29YgeR31AEJQfFwUnVFL31azVk6qN",
+null,
+"ed25519:3duik56zMJSCP7NrQpVSGn5x68CZaDYs8dDZim95eiDtdrADwyKvKqAVHngYcA8twdTwt9yP52UDgN1u7sEFEksb",
+null,
+null,
+null,
+null,
+"ed25519:3zAA1bAtEyfm2476nE62CEvJFVKNgGcDrc9rDwptHrcmYRUHF9TjUpGoxvRkWUTtZphw6QBatQVaPJg9xTwCaUMU",
+"ed25519:4hsKxp2hsK6ivAP1xLK6wvRYiWyjqmqKjHhqXS469GRm1N328yeQApeDzLHTeyBs7sY5aCfETCQFKBKUAvBjzoqk",
+"ed25519:3YHSo5fTFSdNmC374JZCSioqhJVAdwUfmaHZtSufWqPt7HsSmiPb6GkCkebhVaGBnGcywc5T6iDRvoEznvUpecyD",
+null,
+"ed25519:6UAD86Jebg8uhzi4WDUyBVRSuaDKfLf2HWC1wBNYgHo8XgpNa6zpzT7ZBHw534DeFz9egbC6HGDRJKhnhq8UBGC",
+"ed25519:4Q43uq8K2RctbUXkobCcHi1QXzcowyaMNbGP3dNC1FnXCFsCRzw9aqMUPcuPn86SnoaGmWc1mfUK8iMkR4LXW9kg",
+"ed25519:63HGyZnf5mwgcc8m1Srq1kE6YNAJBiR6pNL3hiAr4YMXuUN4zxWB1EqB3PfHjKwNoEfuub2E8sqo2D9Tb6jAbW7",
+null,
+"ed25519:UFu7KRvBT11wU6MfdQzgkB1FqA776vgZS3Abbp3mdtdisg1i9fs1vx3934q1mxCSzVu2S5Rz4Bf2WRm7nNuTCDH",
+"ed25519:5GNZbG7eZiGjgpPZTA75coYKKMWyc8XpsQMrFVq6LkvqsydeZmPYiCTfCawUDfckeMVGSYpyvA6whTMW6Q1Jo13L",
+null,
+"ed25519:4qzWRGQKp1daVcrL6uxMvE8Zg2VSiMxmZxjeo3bPAidz2V3bYD9JPLL48Kj4mMLS47z1NaaGDArtDVgTNCa3729f",
+null,
+"ed25519:3jfcZLDBWrFBUrV6n9FYbzmgt7zzC5Uhp9rNEAoQ8fNxZ28DrrNN8sUXjhVgn9RKPvvM6qkJ88SAvSjivzMN72nn",
+null,
+"ed25519:vYCKNA2TDjEFiDJyyTHPicd3TfFN2emT1yasWnGKYDjhtp9Gz1pysayr3GS3hKSUpqujhDpayYqhuvfshF8MNWm",
+"ed25519:5TAp3eEFUt9W7exbcb1w4xjk5ddNLbCvnKbUaz5m8YZdFujCtDB2Y6ei4iouGySpovF8msnredocZZaMJgBSdbaP",
+"ed25519:4baVZpuzX43kWpu4AtHkc7vejZ98KsLQsARJSngfLcEt7F4mX6rZNLosjtyjVKBLrJJ19G2k4WEAnpGEoVShcsVM",
+"ed25519:4NaZ2Z43qC23MYU991wu6be2bfr6gNUBb7tjdnkB4n2BL8LRWsSnJiDjWsE7ds2ZCm4L7AfZrt8TcVdNvm9Wcz6Z",
+"ed25519:5Fm2xeoLnM9FW85HRGRQY8xVSa2REqGze89Hmx9SQ1cxuESgyxigiZKFMh9Wj86MQCkYgUynWhnFx3MDPFxhiZy9",
+null,
+"ed25519:5AQfsyZxqzxVi1XaCfrzC78xfgzuZT857t55WXwjAk6zMr2XzGHJJpQZMLUEMXrUy9w4ZTyrMwmdwF5ZS5KDNtcb",
+"ed25519:1onjc75mvHDg4VAdPbxSCtVtA2Ru1NprMXAw6kuyex5YAVPqYANUBmWcvFDy9B7khom5Zxd41MCV45F5zZcAt9y",
+null
+],
+"latest_protocol_version": 62
+},
+"signature": "ed25519:2CSZRoKG7Bh1nmHokgrD91LZvsNZeqrCjqTGrBMcMiHUwodVM2vLnVv27qNvZHvSDBdrRKNdgyocCXDm6k6epj5j",
+"hash": "EcqGW4G71aXD3TU1cMbLUiPnahFc15MkyBScTgUveGQz"
+}
 }
 ```
 
@@ -632,15 +651,13 @@ Calculated block hash from BlockHeaderInnerLiteView EcqGW4G71aXD3TU1cMbLUiPnahFc
 
 ##### So, finally we proved two-step inclusion for the next_bp_hash and block hash, that means that our block hash was calculated correctly, having valid data in the first place.
 
-
-
 ## **Developers**
 
+To process and use light client you can copy `.json` utility files `block_header.json` and `validators_ordered.json` -
+the only pieces of data you have to obtain to verify the block. And then replicate the verification logic using any
+script language: Rust, JS , Go etc.
 
-To process and use light client you can copy `.json` utility files `block_header.json` and `validators_ordered.json` - the only pieces of data you have to obtain to verify the block. And then replicate the verification logic using any script language: Rust, JS , Go etc.
-
-Example using Rust ( simplified version ): 
-
+Example using Rust ( simplified version ):
 
 ```rust
 pub fn main() -> Result<()> {
@@ -673,20 +690,32 @@ pub fn main() -> Result<()> {
 }
 ```
 
+## **Edge cases**
 
+Our light client is designed to efficiently handle blockchain data, specifically focusing on epoch-based block
+processing. An epoch in our context is a set of blocks with a predefined count, in this case, 43,200 blocks. While the
+client operates seamlessly for most blocks within an epoch, a specific edge case arises at the boundary of two epochs,
+particularly affecting the handling of the last block of an epoch.
 
+Edge Case Description
+
+- Normal Operation (Blocks 1 - 43,199): For blocks ranging from 1 to 43,199 within a single epoch, the client performs
+  as expected. All conditions and arguments are correctly aligned with the current set of validators and their
+  corresponding signatures, ensuring accurate and efficient block processing.
+
+- Last Block of an Epoch (Block 43,200): The edge case emerges when processing block number 43,200, the final block of
+  an epoch. At this juncture, the next block to be processed belongs to a new epoch (`next_epoch_id`). This transition
+  involves a change in the set of validators and, consequently, the signatures used for replicating the blockchain logic
+  and `next_pb_hash` will be calculated wrong hence all the proving will fail
+
+### Resolution Strategy
+
+We are actively working on implementing a robust handling mechanism for this edge case. The aim is to seamlessly
+transition the validation logic and parameters at the epoch boundary, ensuring uninterrupted and accurate block
+processing across epochs.
 
 Implementation of Near Protocol ZK light client based on proving headers of epoch blocks
 ============
-
-
-
-
-
-
-
-
-
 
 ## **Description**
 
