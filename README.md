@@ -8,7 +8,7 @@ Table of contents
 * [Proving next_bp_hash](#proving-nextbphash)
 * [Proving block hash calculation](#proving-block-hash-calculation)
     * [Developers](#developers)
-    *
+    * [Edge cases](#edge-cases)
 * [Implementation of Near Protocol ZK light client based on proving headers of epoch blocks](#implementation-of-near-protocol-zk-light-client-based-on-proving-headers-of-epoch-blocks)
     * [Description](#description)
     * [Results](#results)
