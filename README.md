@@ -31,9 +31,11 @@ _(for illustrative purposes)_
 - block_hash_proving.txt
 - validator_bytes_representation.txt
 
- _(for utility purpose)_
-- block_header.json 
-- validators_ordered.json
+ _(for utility purposes)_
+- block_header.json : **block header that we are proving**
+- next_block_header.json : **next_block header for the necessary info**
+- prev_epoch_block_header.json : **arbitrary block from prev_epoch (required next_bp_hash field)**
+- validators_ordered.json : **set of validators for proving block**
 
 ##### Let's consider arbitrary block from the [Near Explorer](https://explorer.near.org/blocks/EcqGW4G71aXD3TU1cMbLUiPnahFc15MkyBScTgUveGQz) and its hash `EcqGW4G71aXD3TU1cMbLUiPnahFc15MkyBScTgUveGQz`
 
