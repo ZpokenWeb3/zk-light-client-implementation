@@ -5,6 +5,7 @@ Table of contents
 
 <!--ts-->
 
+* [Introduction](#introduction)
 * [Proving next_bp_hash](#proving-nextbphash)
 * [Proving block hash calculation](#proving-block-hash-calculation)
     * [Developers](#developers)
@@ -16,14 +17,27 @@ Table of contents
 <!--te-->
 
 
-Proving next_bp_hash
+
+Introduction
 ============
 
-##### To prove that an arbitrary block was indeed included in the blockchain, we want to prove that a set of validator that produced that block is valid and actually take place in calculating `next_bp_hash`.
+### Field Interactions and Proving Logic
 
-##### Moreover, we want to prove that there is only one byte input, that can be used for calculation for the `next_bp_hash` and block `hash` respectively.
+1. Operating Fields:
+   - The NEAR zk-light-client operates on several critical fields within the blockchain ecosystem. These fields include the validators, the `next_bp_hash` (next block producers' hash), and the block hash itself.
+2. Formation of next_bp_hash:
+   - The `next_bp_hash` is a crucial component in this process. It is derived from the set of validators responsible for producing the next block. This hash serves as a cryptographic representation of the validators' identity and their role in the upcoming block production.
+3. Calculation of Block Hash:
+   - The block hash is then calculated based on the data of the current block. This data includes the `next_bp_hash`. By incorporating the `next_bp_hash` into the block hash calculation, there is a direct cryptographic link between the validators of the next block and the current block's integrity.
+4. Underpinning Idea of Proving:
+   - The core idea here is to establish a traceable and verifiable chain of custody for block creation. By proving that the `next_bp_hash` (derived from the validators) is a part of the current block's data, which in turn is used to calculate the block's hash, a seamless and secure linkage is formed.
+   - This linkage ensures that each block is not only a product of its immediate data but also carries a cryptographic signature of its contextual environment, i.e., the validators for the next block.
+   - Therefore, verifying a block's authenticity involves confirming that the set of validators is valid (thus legitimizing the `next_bp_hash`) and ensuring that the block hash is correctly derived from the data, including this `next_bp_hash`.
 
-##### defined set of validators -> defined next_bp_hash -> defined block hash
+  
+```
+defined set of validators ======> defined next_bp_hash ======> defined block hash
+```
 
 ##### There is five output files:
 
@@ -40,6 +54,19 @@ _(for utility purposes)_
 - prev_epoch_block_header.json : **arbitrary block from prev_epoch (required next_bp_hash field)**
 - validators_ordered.json : **set of validators for proving block**
 
+
+Illustrative scheme ( full-size
+image [here](https://user-images.githubusercontent.com/58668238/284517560-69ad218f-13e9-47aa-9a59-cfecfbd6da70.png) ):
+
+![image](https://github.com/ZpokenWeb3/zk-light-client-implementation/assets/58668238/69ad218f-13e9-47aa-9a59-cfecfbd6da70)
+
+
+
+Proving next_bp_hash
+============
+
+
+
 ##### Let's consider arbitrary block from the [Near Explorer](https://explorer.near.org/blocks/EcqGW4G71aXD3TU1cMbLUiPnahFc15MkyBScTgUveGQz) and its hash `EcqGW4G71aXD3TU1cMbLUiPnahFc15MkyBScTgUveGQz`
 
 The underpinning idea is to replicate the Near core's logic for calculating `next_bp_hash` and compare it to the real
@@ -52,40 +79,22 @@ values obtained from the blockchain through RPC commands. The logic is the follo
     prev_epoch_id: EpochId,
     last_known_hash: &CryptoHash,
 ) -> Result<CryptoHash, Error> {
-    let bps = epoch_manager.get_epoch_block_producers_ordered(&epoch_id, last_known_hash)?; < ---------step
-    1
-    is
-    to
-    acquire
-    block
-    producers
-    for that epoch
+    // step 1 is to acquire block producers for that epoch
+    let bps = epoch_manager.get_epoch_block_producers_ordered(&epoch_id, last_known_hash)?;
     let protocol_version = epoch_manager.get_epoch_protocol_version(&prev_epoch_id)?;
     if checked_feature!("stable", BlockHeaderV3, protocol_version) {
         let validator_stakes = bps.into_iter().map(|(bp, _)| bp);
-        Ok(CryptoHash::hash_borsh_iter(validator_stakes)) < ---------step
-        2
-        is
-        to
-        compute
-        bp_hash
-        from
-        the
-        validator_stakes
+        // step 2  is to compute next_bp_hash from the validator_stakes
+        Ok(CryptoHash::hash_borsh_iter(validator_stakes))
     } else {
         let validator_stakes = bps.into_iter().map(|(bp, _)| bp.into_v1());
-        Ok(CryptoHash::hash_borsh_iter(validator_stakes)) < ---------same
-        step
-        2
+        // same step 2
+        Ok(CryptoHash::hash_borsh_iter(validator_stakes))
     }
 }
 
 ```
 
-Illustrative scheme ( full-size
-image [here](https://user-images.githubusercontent.com/58668238/284517560-69ad218f-13e9-47aa-9a59-cfecfbd6da70.png) ):
-
-![image](https://github.com/ZpokenWeb3/zk-light-client-implementation/assets/58668238/69ad218f-13e9-47aa-9a59-cfecfbd6da70)
 
 1) Configure the account in the config.json file
 
@@ -651,8 +660,8 @@ Calculated block hash from BlockHeaderInnerLiteView EcqGW4G71aXD3TU1cMbLUiPnahFc
 
 ##### So, finally we proved two-step inclusion for the next_bp_hash and block hash, that means that our block hash was calculated correctly, having valid data in the first place.
 
-## **Developers**
-
+Developers
+============
 To process and use light client you can copy `.json` utility files `block_header.json` and `validators_ordered.json` -
 the only pieces of data you have to obtain to verify the block. And then replicate the verification logic using any
 script language: Rust, JS , Go etc.
@@ -690,8 +699,8 @@ pub fn main() -> Result<()> {
 }
 ```
 
-## **Edge cases**
-
+Edge cases
+============
 Our light client is designed to efficiently handle blockchain data, specifically focusing on epoch-based block
 processing. An epoch in our context is a set of blocks with a predefined count, in this case, 43,200 blocks. While the
 client operates seamlessly for most blocks within an epoch, a specific edge case arises at the boundary of two epochs,
