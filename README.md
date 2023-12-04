@@ -17,11 +17,12 @@ Table of contents
 <!--te-->
 
 
-
 Introduction
 ============
 
-### Field Interactions and Proving Logic
+Implementation of Near light client allowing to prove the finality of a block based on the existing final block of the previous epoch
+
+### Proof of block integrity and finality
 
 1. Operating Fields:
     - The NEAR zk-light-client operates on several critical fields within the blockchain ecosystem. These fields include
@@ -157,7 +158,7 @@ pub fn hash_borsh_iter<I>(values: I) -> CryptoHash
 The code is the following:
 
 ```rust
-    let iter = validator_stakes;
+let iter = validator_stakes;
 let n = u32::try_from(iter.len()).unwrap();
 let mut hasher = sha2::Sha256::default ();
 let mut len_bytes = n.to_le_bytes().try_to_vec().unwrap();
@@ -168,22 +169,9 @@ final_bytes.append( & mut len_bytes);
 
 hasher.write_all( & n.to_le_bytes()).unwrap();
 
-writeln!(
-    file_next_bp_hash_proving,
-    "First part of the hashing: EXPERIMENTAL_validators_ordered len in bytes: {:?}\n\n",
-    n.to_le_bytes().try_to_vec().unwrap()
-)
-.expect("Unable to write to file");
 
 let count = iter
 .inspect( | value| {
-writeln ! (file_validator_bytes_representation, "{:?}\naccount_id bytes: {:?}\npublic key bytes: {:?}\nstake bytes: {:?}\nwhole byte representation in bytes:  {:?}\n\n",
-value,
-BorshSerialize::try_to_vec( & value.account_id()).unwrap(),
-BorshSerialize::try_to_vec( &value.public_key()).unwrap(),
-BorshSerialize::try_to_vec( & value.stake()).unwrap(),
-BorshSerialize::try_to_vec( & value).unwrap())
-.expect("Unable to write to file");
 final_bytes.append( &mut BorshSerialize::try_to_vec( & value).unwrap());
 experimental_validators_ordered_bytes.append( & mut BorshSerialize::try_to_vec( & value).unwrap());
 BorshSerialize::serialize( & value, & mut hasher).unwrap()
@@ -194,42 +182,6 @@ assert_eq!(n as usize, count);
 
 let computed_bp_hash = CryptoHash(hasher.clone().finalize().into());
 
-// -------------- next_bp_hash calculation results output --------------
-
-writeln!(
-    file_next_bp_hash_proving,
-    "Second part of the hashing EXPERIMENTAL_validators_ordered as ValidatorStake: {:?}\n\n",
-    experimental_validators_ordered_bytes
-)
-.expect("Unable to write to file");
-
-writeln!(
-    file_next_bp_hash_proving,
-    "EXPERIMENTAL_validators_ordered input array of bytes: {:?}\n\n",
-    final_bytes
-)
-.expect("Unable to write to file");
-
-writeln!(
-    file_validator_bytes_representation,
-    "EXPERIMENTAL_validators_ordered input array of bytes: {:?}",
-    final_bytes
-)
-.expect("Unable to write to file");
-
-writeln!(
-    file_next_bp_hash_proving,
-    "Computed BP hash in bytes: {:?}\n\n",
-    hasher.clone().finalize().bytes()
-)
-.expect("Unable to write to file");
-
-writeln!(
-    file_next_bp_hash_proving,
-    "Computed BP hash {:?}\n\n",
-    computed_bp_hash
-)
-.expect("Unable to write to file");
 ```
 
 So we have all the parts of the hashing in HEX and byte representation in `next_bp_hash_proving.txt`:
@@ -292,20 +244,6 @@ let previous_epoch_block_response: BlockResponse = client
 .await?
 .json()
 .await?;
-
-writeln!(
-    file_next_bp_hash_proving,
-    "Previous epoch block  {:?}\n\n",
-    previous_epoch_block_response.result.header
-)
-.expect("Unable to write to file");
-
-writeln!(
-    file_next_bp_hash_proving,
-    "computed hash {} == {} stored hash in previous epoch block",
-    computed_bp_hash, previous_epoch_block_response.result.header.next_bp_hash
-)
-.expect("Unable to write to file");
 ```
 
 5) Output formatted for convenience:
@@ -352,73 +290,17 @@ let block_response: BlockResponse = client
 .json()
 .await?;
 
-writeln!(file_block_hash_proving, "block hash PROVING\n\n", ).expect("Unable to write to file");
-
-writeln!(
-    file_block_hash_proving,
-    "Current block BlockHeaderView:\t{:?}\n\n",
-    block_response.result.header,
-)
-.expect("Unable to write to file");
 
 let block_header_inner_lite_view_json_data = serde_json::to_string(
 & BlockHeader::from(block_response.result.header.clone()),
 )
 .unwrap();
 
-file_block_header_json
-.write_all(block_header_inner_lite_view_json_data.as_bytes())
-.unwrap();
-
-writeln!(
-    file_block_hash_proving,
-    "Current block that are used for calculating block hash BlockHeaderInnerLiteView:  {:?}\n\n",
-    &BlockHeaderInnerLiteView::from(BlockHeader::from(block_response.result.header.clone()))
-)
-.expect("Unable to write to file");
-
-writeln!(
-    file_block_hash_proving,
-    "Current block that are used for calculating block hash in bytes BlockHeaderInnerLiteView:  {:?}\n\n",
-    BorshSerialize::try_to_vec(&BlockHeaderInnerLiteView::from(BlockHeader::from(block_response.result.header.clone()))).unwrap(),
-)
-.expect("Unable to write to file");
-
-writeln!(
-    file_block_hash_proving,
-    "Current block next_bp_hash in bytes: {:?}\n\n",
-    BorshSerialize::try_to_vec(&block_response.result.header.next_bp_hash).unwrap(),
-)
-.expect("Unable to write to file");
 
 // -------------- block hash calculation from the BlockHeaderInnerLiteView structure --------------
 
 let computed_block_hash =
 block_hash_from_header(BlockHeader::from(block_response.result.header.clone()));
-
-// -------------- block hash calculation results output --------------
-
-writeln!(
-    file_block_hash_proving,
-    "computed block hash in bytes {:?}\n\n",
-    BorshSerialize::try_to_vec(&computed_block_hash.unwrap()).unwrap(),
-)
-.expect("Unable to write to file");
-
-writeln!(
-    file_block_hash_proving,
-    "Calculated block hash from BlockHeaderInnerLiteView {:?} == {:?} BlockHeaderView\n\n",
-    computed_block_hash.unwrap(),
-    block_response.result.header.hash,
-)
-.expect("Unable to write to file");
-
-assert_eq!(
-    computed_block_hash.unwrap(),
-    block_response.result.header.hash,
-    "Computed block hash has to be equal to obtained from RPC BlockHeaderView\n\n"
-);
-
 ```
 
 BlockHeader has the following structure and `init` function along with it:
