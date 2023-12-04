@@ -22,6 +22,13 @@ Introduction
 
 Implementation of Near light client allowing to prove the finality of a block based on the existing final block of the previous epoch
 
+
+### Input parameters for proof generating
+1. Block for which the proof is generated `(epoch N)` [Example](https://github.com/ZpokenWeb3/zk-light-client-implementation/blob/main/script/data/block-A6Gcz5uXxyTrigefyr48AXwag6gB7D6txzPSR3jBqqg2/block_header.json)
+2. Block of the previous epoch `(epoch N-1)` [Example](https://github.com/ZpokenWeb3/zk-light-client-implementation/blob/main/script/data/block-A6Gcz5uXxyTrigefyr48AXwag6gB7D6txzPSR3jBqqg2/block_header.json)
+3. List of block producers for `epoch N ` [Example](https://github.com/ZpokenWeb3/zk-light-client-implementation/blob/main/script/data/block-A6Gcz5uXxyTrigefyr48AXwag6gB7D6txzPSR3jBqqg2/validators_ordered.json)
+
+
 ### Proof of block integrity and finality
 
 1. Operating Fields:
