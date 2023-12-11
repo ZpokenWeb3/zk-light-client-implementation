@@ -697,6 +697,7 @@ So, the total time to compute on our machine (32 threads) was 205 seconds (3:25)
 Developed by [Zpoken Cryptography Team](https://zpoken.io/)
 
 Follow us on X: [https://twitter.com/ZpokenWeb3](https://twitter.com/ZpokenWeb3)
+
 Follow us on Medium: [Medium](https://zpoken.medium.com/zk-light-client-introduction-bc397290114)
 
 For any suggestions or questions you can contact us on email: support@zpoken.io
