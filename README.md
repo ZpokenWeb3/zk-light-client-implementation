@@ -22,6 +22,13 @@ Introduction
 
 Implementation of Near light client allowing to prove the finality of a block based on the existing final block of the previous epoch
 
+
+### Input parameters for proof generating
+1. Block for which the proof is generated `(epoch N)` [Example](https://github.com/ZpokenWeb3/zk-light-client-implementation/blob/main/script/data/block-A6Gcz5uXxyTrigefyr48AXwag6gB7D6txzPSR3jBqqg2/block_header.json)
+2. Block of the previous epoch `(epoch N-1)` [Example](https://github.com/ZpokenWeb3/zk-light-client-implementation/blob/main/script/data/block-A6Gcz5uXxyTrigefyr48AXwag6gB7D6txzPSR3jBqqg2/block_header.json)
+3. List of block producers for `epoch N ` [Example](https://github.com/ZpokenWeb3/zk-light-client-implementation/blob/main/script/data/block-A6Gcz5uXxyTrigefyr48AXwag6gB7D6txzPSR3jBqqg2/validators_ordered.json)
+
+
 ### Proof of block integrity and finality
 
 1. Operating Fields:
@@ -687,4 +694,12 @@ After run, you will see output similar to the next one:
 
 So, the total time to compute on our machine (32 threads) was 205 seconds (3:25).
 
+
+_______________________________________________________________________________
 Developed by [Zpoken Cryptography Team](https://zpoken.io/)
+
+Follow us on X: [https://twitter.com/ZpokenWeb3](https://twitter.com/ZpokenWeb3)
+
+Follow us on Medium: [Medium](https://zpoken.medium.com/zk-light-client-introduction-bc397290114)
+
+For any suggestions or questions you can contact us on email: support@zpoken.io
