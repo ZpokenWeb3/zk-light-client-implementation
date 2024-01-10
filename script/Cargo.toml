@@ -12,6 +12,6 @@ serde = { version = "1.0", features = ["derive"] }
 reqwest = { version = "0.11", features = ["json"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["full"] }
-near-primitives = "0.17.0"
-near-crypto = "0.17.0"
+near-primitives = "0.19.0"
+near-crypto = "0.19.0"
 sha2 = "0.10.8"
