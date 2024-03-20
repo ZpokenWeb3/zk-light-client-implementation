@@ -1,5 +1,0 @@
-[build]
-rustflags = ["-C", "target-cpu=native"]
-
-[toolchain]
-channel = "nightly"

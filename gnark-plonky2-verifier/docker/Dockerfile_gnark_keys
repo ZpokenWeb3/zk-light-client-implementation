@@ -1,0 +1,8 @@
+#syntax=docker/dockerfile:1
+
+FROM alpine:latest
+
+WORKDIR /app
+COPY api-build/ /app
+# Copy the pk, vk, contract of the api-build folder into the Docker image
+CMD exit

@@ -1,0 +1,136 @@
+version: '3.8'
+services:
+  http_service:
+    image: zpokendev/zk-lite-client_http-service:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - "node.role==manager"
+      update_config:
+        parallelism: 1
+        delay: 10s
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9024/health"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+    ports:
+      - '9024:9024'
+    volumes:
+      - ./proofs:/app/proofs
+    depends_on:
+      - nats
+      - gnark_wrapper
+    networks:
+      - common-network
+
+  block_prover:
+    image: zpokendev/zk-lite-client_block-prover:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - "node.role==manager"
+      update_config:
+        parallelism: 1
+        delay: 10s
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 2
+    volumes:
+      - ./proofs:/proofs
+    depends_on:
+      - nats
+    networks:
+      - common-network
+
+  sign_prover:
+    image: zpokendev/zk-lite-client_sign-prover:latest
+    deploy:
+      mode: replicated
+      replicas: 2
+      placement:
+        max_replicas_per_node: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    depends_on:
+      - nats
+    networks:
+      - common-network
+
+  nats:
+    image: nats:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - "node.role==manager"
+      update_config:
+        parallelism: 1
+        delay: 10s
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["--jetstream"]
+    hostname: nats-server
+    networks:
+      - common-network
+
+  gnark_wrapper:
+    image: zpokendev/zk-lite-client_gnark-wrapper:latest
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        max_replicas_per_node: 1
+        constraints:
+          - "node.role==manager"
+      update_config:
+        parallelism: 1
+        delay: 10s
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+    ports:
+      - '8010:8010'
+    hostname: gnark_wrapper
+    networks:
+      - common-network
+
+networks:
+  common-network: {}

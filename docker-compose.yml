@@ -1,0 +1,68 @@
+version: '3.8'
+services:
+  http_service:
+    image: zpokendev/zk-lite-client_http-service:latest
+    build: ./backend
+    ports:
+      - '9024:9024'
+    volumes:
+      - ./proofs:/app/proofs
+    depends_on:
+      - nats
+      - gnark_wrapper
+    networks:
+      - common-network
+
+  block_prover:
+    image: zpokendev/zk-lite-client_block-prover:latest
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+    volumes:
+      - ./proofs:/proofs
+    depends_on:
+      - nats
+    networks:
+      - common-network
+
+  sign_prover:
+    image: zpokendev/zk-lite-client_sign-prover:latest
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.prover
+    depends_on:
+      - nats
+    networks:
+      - common-network
+
+  nats:
+    image: nats:latest
+    expose:
+      - "4222"
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    hostname: nats-server
+    command: ["--jetstream"]
+    networks:
+      - common-network
+
+  gnark_wrapper:
+    image: zpokendev/zk-lite-client_gnark-wrapper:latest
+    build:
+      context: ./gnark-plonky2-verifier/
+      dockerfile: ./docker/Dockerfile_gnark_prebuilt
+    ports:
+      - '8010:8010'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
+    hostname: gnark_wrapper
+    networks:
+      - common-network
+
+networks:
+  common-network: {}
