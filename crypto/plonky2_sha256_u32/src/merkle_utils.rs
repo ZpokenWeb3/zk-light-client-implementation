@@ -54,37 +54,26 @@ pub fn verify_merkle_proof<Hash: PartialEq, Hasher: MerkleHasher<Hash>>(
     proof: MerkleProof<Hash>,
 ) -> bool {
     let mut current = proof.value;
-    for (i, sibling) in proof.siblings.iter().enumerate() {
-        if proof.index & (1 << i) == 0 {
-            current = hasher.two_to_one(sibling, &current);
-        } else {
-            current = hasher.two_to_one(sibling, &current);
-        }
+    for (_, sibling) in proof.siblings.iter().enumerate() {
+        current = hasher.two_to_one(sibling, &current);
     }
     current == proof.root
 }
+
 pub fn verify_delta_merkle_proof<Hash: PartialEq, Hasher: MerkleHasher<Hash>>(
     hasher: &Hasher,
     proof: DeltaMerkleProof<Hash>,
 ) -> bool {
     let mut current = proof.old_value;
-    for (i, sibling) in proof.siblings.iter().enumerate() {
-        if proof.index & (1 << i) == 0 {
-            current = hasher.two_to_one(sibling, &current);
-        } else {
-            current = hasher.two_to_one(sibling, &current);
-        }
+    for (_, sibling) in proof.siblings.iter().enumerate() {
+        current = hasher.two_to_one(sibling, &current);
     }
     if current != proof.old_root {
         return false;
     }
     current = proof.new_value;
-    for (i, sibling) in proof.siblings.iter().enumerate() {
-        if proof.index & (1 << i) == 0 {
-            current = hasher.two_to_one(sibling, &current);
-        } else {
-            current = hasher.two_to_one(sibling, &current);
-        }
+    for (_, sibling) in proof.siblings.iter().enumerate() {
+        current = hasher.two_to_one(sibling, &current);
     }
     current == proof.new_root
 }

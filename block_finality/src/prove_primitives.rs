@@ -114,18 +114,18 @@ pub fn two_thirds<F: RichField + Extendable<D>, C: GenericConfig<D, F=F>, const 
     /// compute 2 * stake2
     let two = builder.two();
     let mut c = builder.zero();
-    for i in 0..stake2_targets.len() {
-        let t = builder.mul_add(stake2_targets[i], two, c);
+    for stake_target in &mut stake2_targets {
+        let t = builder.mul_add(*stake_target, two, c);
         let bits = builder.split_le(t, 9);
-        stake2_targets[i] = builder.le_sum(bits[0..8].iter());
+        *stake_target = builder.le_sum(bits[0..8].iter());
         c = builder.le_sum(bits[8..9].iter());
     }
     stake2_targets.push(c);
     // if stake2 array is bigger and there are non zero elements
     // then stake1 is not 2/3 of stake2
     let zero = builder.zero();
-    for i in stake1_3_targets.len()..stake2_targets.len() {
-        builder.connect(stake2_targets[i], zero);
+    for stake in stake2_targets.iter().skip(stake1_3_targets.len()) {
+        builder.connect(*stake, zero);
     }
     /// compare: stake1 is more than 2/3 of stake2
     let mut res: Vec<Target> = builder.add_virtual_targets(stake1_3_targets.len());

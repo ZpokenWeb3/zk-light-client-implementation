@@ -1,0 +1,51 @@
+name: Backend
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Install packages
+        working-directory: ./backend
+        run: yarn install
+
+      - name: Run fmt check
+        working-directory: ./backend
+        run: yarn format-check
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Install packages
+        working-directory: ./backend
+        run: yarn install
+
+      - name: Run lint
+        working-directory: ./backend
+        run: yarn lint

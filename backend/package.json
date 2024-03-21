@@ -6,7 +6,10 @@
   "scripts": {
     "start": "ts-node-dev --respawn --transpile-only --exit-child src/server.ts",
     "db:migrate": "npx prisma migrate dev --name user-entity --create-only && npx prisma generate",
-    "db:push": "npx prisma db push"
+    "db:push": "npx prisma db push",
+    "format": "prettier --write .",
+    "format-check": "prettier --check .",
+    "lint": "eslint \"**/*.ts*\""
   },
   "compilerOptions": {
     "target": "es5",
@@ -18,19 +21,24 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.17",
+    "eslint": "^8.57.0",
     "prisma": "^5.8.1",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "typescript-eslint": "^7.3.1"
   },
   "dependencies": {
+    "@eslint/js": "^8.57.0",
     "@prisma/client": "^4.11.0",
     "bs58": "^5.0.0",
     "dotenv": "^16.0.3",
+    "ethereumjs-tx": "^2.1.2",
     "express": "^4.18.2",
     "json-bigint": "^1.0.0",
     "lossless-json": "^4.0.1",
     "nats": "^2.19.0",
-    "web3": "^4.5.0",
-    "ethereumjs-tx": "^2.1.2"
-  }
+    "prettier": "^3.2.5",
+    "web3": "^4.5.0"
+  },
+  "type": "module"
 }

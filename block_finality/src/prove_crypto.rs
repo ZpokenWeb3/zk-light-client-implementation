@@ -297,11 +297,11 @@ pub fn sha256_proof_reuse_circuit_bits<
     let msg_bits = array_to_bits(msg);
     let hash_bits = array_to_bits(hash);
     let mut pw: PartialWitness<F> = PartialWitness::new();
-    for i in 0..msg_bits.len() {
-        pw.set_bool_target(targets.message[i], msg_bits[i]);
+    for (i, msg_bit) in msg_bits.iter().enumerate() {
+        pw.set_bool_target(targets.message[i], *msg_bit);
     }
-    for i in 0..hash_bits.len() {
-        pw.set_bool_target(targets.digest[i], hash_bits[i]);
+    for (i, hash_bit) in hash_bits.iter().enumerate() {
+        pw.set_bool_target(targets.digest[i], *hash_bit);
     }
     let timing = TimingTree::new("prove", Level::Info);
     let proof = circuit_data.prove(pw)?;
@@ -338,11 +338,11 @@ pub fn sha256_proof_pis_bits<
     let msg_bits = array_to_bits(msg);
     let hash_bits = array_to_bits(hash);
     let mut pw: PartialWitness<F> = PartialWitness::new();
-    for i in 0..msg_bits.len() {
-        pw.set_bool_target(targets.message[i], msg_bits[i]);
+    for (i, msg_bit) in msg_bits.iter().enumerate() {
+        pw.set_bool_target(targets.message[i], *msg_bit);
     }
-    for i in 0..hash_bits.len() {
-        pw.set_bool_target(targets.digest[i], hash_bits[i]);
+    for (i, hash_bit) in hash_bits.iter().enumerate() {
+        pw.set_bool_target(targets.digest[i], *hash_bit);
     }
     if set_pis {
         for i in 0..hash_bits.len() {

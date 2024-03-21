@@ -1,33 +1,35 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "../src/Verifier.sol";
 import "../src/NearBlockVerification.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 contract NearBlockVerificationTest is Test {
     Verifier public verifier;
     NearBlockVerification public nearBlockVerification;
+
+    address public deployer;
+    address public user;
 
     uint256[4] public inputs;
     uint256[8] public proof;
     uint256[4] public incorrectInputs;
     uint256[8] public incorrectProof;
 
-    event ProofVerifiedAndSaved(
-        uint256[4] indexed input,
-        uint256[8] proof
-    );
+    event ProofVerifiedAndSaved(uint256[4] indexed input, uint256[8] proof);
 
-    event CompressedProofVerifiedAndSaved(
-        uint256[4] indexed input,
-        uint256[4] compressedProof
-    );
+    event CompressedProofVerifiedAndSaved(uint256[4] indexed input, uint256[4] compressedProof);
 
     function setUp() public {
         verifier = new Verifier();
         nearBlockVerification = new NearBlockVerification();
         nearBlockVerification.initialize(address(verifier));
+        deployer = address(this);
+        user = vm.addr(1);
 
         inputs = [
             946114226032418920967126594582827844,
@@ -65,7 +67,22 @@ contract NearBlockVerificationTest is Test {
             19991156839958621917471713965247457880542796239191147501866226782529365125610
         ];
     }
+}
 
+contract SetupTest is NearBlockVerificationTest {
+    function testSetUp() public view {
+        assertEq(nearBlockVerification.owner(), deployer);
+        assertEq(address(nearBlockVerification.getVerifier()), address(verifier));
+        assertEq(nearBlockVerification.paused(), false);
+    }
+
+    function testRevertInitialize() public {
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        nearBlockVerification.initialize(address(verifier));
+    }
+}
+
+contract VerifyTest is NearBlockVerificationTest {
     function testSuccessfulVerifyAndSaveProof() public {
         nearBlockVerification.verifyAndSaveProof(inputs, proof);
     }
@@ -84,7 +101,8 @@ contract NearBlockVerificationTest is Test {
     }
 
     function testIsProofedWhenInputIsNotProofed() public view {
-        uint256[2] memory unProofedInput = [uint256(250203699874957393754930603326313200955), uint256(294168951901226811933587358204780889671)];
+        uint256[2] memory unProofedInput =
+            [uint256(250203699874957393754930603326313200955), uint256(294168951901226811933587358204780889671)];
 
         assertFalse(nearBlockVerification.isProofed(unProofedInput));
         assertFalse(nearBlockVerification.isProofed([inputs[0], inputs[1]]));
@@ -96,15 +114,9 @@ contract NearBlockVerificationTest is Test {
 
         assertTrue(nearBlockVerification.isProofed([inputs[2], inputs[3]]));
     }
+}
 
-    function testToHash() public view {
-        bytes memory proofedInputHashBytes = hex"00b63708658aa1456ac96ff803915344bdbe264fded3c726a10e8defce103e1b";
-        assertEq(nearBlockVerification.toHash([inputs[0], inputs[1]]), proofedInputHashBytes);
-
-        proofedInputHashBytes = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647";
-        assertEq(nearBlockVerification.toHash([inputs[2], inputs[3]]), proofedInputHashBytes);
-    }
-
+contract ProofStatusTest is NearBlockVerificationTest {
     function testIsProofedHashWhenInputHashNotProofed() public view {
         bytes memory unProofedInputHash = hex"00b63708658aa1456ac96ff803915344bdbe264fded3c726a10e8defce103e1b";
         assertFalse(nearBlockVerification.isProofedHash(unProofedInputHash));
@@ -122,15 +134,9 @@ contract NearBlockVerificationTest is Test {
         proofedInputHash = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647";
         assertTrue(nearBlockVerification.isProofedHash(proofedInputHash));
     }
+}
 
-    function testSetVerifier() public {
-        assertEq(address(nearBlockVerification.getVerifier()), address(verifier));
-
-        Verifier newVerifier = new Verifier();
-        nearBlockVerification.setVerifier(address(newVerifier));
-        assertEq(address(nearBlockVerification.getVerifier()), address(newVerifier));
-    }
-
+contract EventsTest is NearBlockVerificationTest {
     function testProofVerifiedAndSavedEvent() public {
         vm.expectEmit(true, false, false, true, address(nearBlockVerification));
         emit NearBlockVerification.ProofVerifiedAndSaved(inputs, proof);
@@ -145,5 +151,135 @@ contract NearBlockVerificationTest is Test {
         emit NearBlockVerification.CompressedProofVerifiedAndSaved(inputs, compressedProof);
 
         nearBlockVerification.verifyAndSaveCompressedProof(inputs, compressedProof);
+    }
+
+    function testPausedEvent() public {
+        vm.expectEmit(false, false, false, true, address(nearBlockVerification));
+        emit PausableUpgradeable.Paused(deployer);
+
+        nearBlockVerification.pause();
+    }
+
+    function testUnpausedEvent() public {
+        nearBlockVerification.pause();
+
+        vm.expectEmit(false, false, false, true, address(nearBlockVerification));
+        emit PausableUpgradeable.Unpaused(deployer);
+
+        nearBlockVerification.unpause();
+    }
+
+    function testInitializedEvent() public {
+        NearBlockVerification newNearBlockVerification = new NearBlockVerification();
+
+        vm.expectEmit(false, false, false, true, address(newNearBlockVerification));
+        emit Initializable.Initialized(1);
+
+        newNearBlockVerification.initialize(address(verifier));
+    }
+}
+
+contract SetVerifierTest is NearBlockVerificationTest {
+    function testSetVerifier() public {
+        assertEq(address(nearBlockVerification.getVerifier()), address(verifier));
+
+        Verifier newVerifier = new Verifier();
+        nearBlockVerification.setVerifier(address(newVerifier));
+        assertEq(address(nearBlockVerification.getVerifier()), address(newVerifier));
+    }
+}
+
+contract ConvertTest is NearBlockVerificationTest {
+    function testToHash() public view {
+        bytes memory proofedInputHashBytes = hex"00b63708658aa1456ac96ff803915344bdbe264fded3c726a10e8defce103e1b";
+        assertEq(nearBlockVerification.toHash([inputs[0], inputs[1]]), proofedInputHashBytes);
+
+        proofedInputHashBytes = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647";
+        assertEq(nearBlockVerification.toHash([inputs[2], inputs[3]]), proofedInputHashBytes);
+    }
+}
+
+contract PausableTest is NearBlockVerificationTest {
+    function testPause() public {
+        assertEq(nearBlockVerification.paused(), false);
+        nearBlockVerification.pause();
+        assertEq(nearBlockVerification.paused(), true);
+    }
+
+    function testRevertPauseByNonOwner() public {
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+        vm.prank(user);
+        nearBlockVerification.pause();
+    }
+
+    function testUnpause() public {
+        nearBlockVerification.pause();
+        assertEq(nearBlockVerification.paused(), true);
+        nearBlockVerification.unpause();
+        assertEq(nearBlockVerification.paused(), false);
+    }
+
+    function testRevertUnpauseByNonOwner() public {
+        nearBlockVerification.pause();
+
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+        vm.prank(user);
+        nearBlockVerification.unpause();
+    }
+
+    function testRevertPauseWhenAlreadyPaused() public {
+        nearBlockVerification.pause();
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        nearBlockVerification.pause();
+    }
+
+    function testRevertUnpauseWhenNotPaused() public {
+        vm.expectRevert(PausableUpgradeable.ExpectedPause.selector);
+        nearBlockVerification.unpause();
+
+        nearBlockVerification.pause();
+        nearBlockVerification.unpause();
+        vm.expectRevert(PausableUpgradeable.ExpectedPause.selector);
+        nearBlockVerification.unpause();
+    }
+
+    function testCanNotVerifyInPause() public {
+        nearBlockVerification.pause();
+
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        nearBlockVerification.verifyAndSaveProof(inputs, proof);
+
+        uint256[4] memory compressedProof = verifier.compressProof(proof);
+        vm.expectRevert(PausableUpgradeable.EnforcedPause.selector);
+        nearBlockVerification.verifyAndSaveCompressedProof(inputs, compressedProof);
+    }
+}
+
+contract OwnableTest is NearBlockVerificationTest {
+    function testChangesOwnerAfterTransferOwnership() public {
+        nearBlockVerification.transferOwnership(user);
+        assertEq(nearBlockVerification.owner(), user);
+    }
+
+    function testPreventsNonOwnersFromTransferring() public {
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+        vm.prank(user);
+        nearBlockVerification.transferOwnership(user);
+    }
+
+    function testGuardsOwnershipAgainstStuckState() public {
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableInvalidOwner.selector, address(0)));
+        nearBlockVerification.transferOwnership(address(0));
+    }
+
+    function testLosesOwnershipAfterRenouncement() public {
+        nearBlockVerification.renounceOwnership();
+        assertEq(nearBlockVerification.owner(), address(0));
+    }
+
+    function testPreventsNonOwnersFromRenouncement() public {
+        vm.expectRevert(abi.encodeWithSelector(OwnableUpgradeable.OwnableUnauthorizedAccount.selector, user));
+        vm.prank(user);
+        nearBlockVerification.renounceOwnership();
     }
 }

@@ -21,3 +21,4 @@ rand = { version = "0.8.5", default-features = false, features = ["getrandom"] }
 
 [dev-dependencies]
 sha2 = { version = "0.10.6" }
+

@@ -1,0 +1,59 @@
+name: Hardhat
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Install yarn
+        working-directory: ./contracts/hardhat
+        run: npm install --global yarn
+
+      - name: Install packages
+        working-directory: ./contracts/hardhat
+        run: yarn
+
+      - name: Run check
+        working-directory: ./contracts/hardhat
+        run: npm_config_yes=true npm run check
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Install yarn
+        working-directory: ./contracts/hardhat
+        run: npm install --global yarn
+
+      - name: Install packages
+        working-directory: ./contracts/hardhat
+        run: yarn
+
+      - name: Run tests
+        working-directory: ./contracts/hardhat
+        run: npm_config_yes=true npm run test

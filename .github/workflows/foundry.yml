@@ -1,0 +1,54 @@
+name: Foundry
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run fmt check
+        working-directory: ./contracts/foundry/verifier
+        run: forge fmt --check
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install OpenZeppelin lib
+        working-directory: ./contracts/foundry/verifier
+        run: forge install OpenZeppelin/openzeppelin-contracts-upgradeable --no-commit
+
+      - name: Run tests
+        working-directory: ./contracts/foundry/verifier
+        run: forge test

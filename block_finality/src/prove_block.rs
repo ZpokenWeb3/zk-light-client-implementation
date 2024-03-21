@@ -601,18 +601,18 @@ pub fn prove_valid_keys_stakes_in_valiators_list<
     // compute (2 * all_stake_sum)
     let two = builder.two();
     let mut crr = builder.zero();
-    for i in 0..stake_sum.len() {
-        let t = builder.mul_add(stake_sum[i], two, crr);
+    for stake in &mut stake_sum {
+        let t = builder.mul_add(*stake, two, crr);
         let bits = builder.split_le(t, 9);
-        stake_sum[i] = builder.le_sum(bits[0..8].iter());
+        *stake = builder.le_sum(bits[0..8].iter());
         crr = builder.le_sum(bits[8..9].iter());
     }
     stake_sum.push(crr);
     // if all_stake_sum array is bigger and there are non zero elements
     // then valid_stake_sum is not 2/3 of stake2
     let zero = builder.zero();
-    for i in valid_stake_sum.len()..stake_sum.len() {
-        builder.connect(stake_sum[i], zero);
+    for stake in stake_sum.iter().skip(valid_stake_sum.len()) {
+        builder.connect(*stake, zero);
     }
     // check if valid_stake_sum_3 >= all_stake_sum
     let mut res: Vec<Target> = builder.add_virtual_targets(three_times_valid_stake_sum.len());

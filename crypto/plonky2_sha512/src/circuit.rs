@@ -46,9 +46,9 @@ pub struct Sha512Targets {
 pub fn array_to_bits(bytes: &[u8]) -> Vec<bool> {
     let len = bytes.len();
     let mut ret = Vec::new();
-    for i in 0..len {
+    for byte in bytes.iter().take(len) {
         for j in 0..8 {
-            let b = (bytes[i] >> (7 - j)) & 1;
+            let b = (*byte >> (7 - j)) & 1;
             ret.push(b == 1);
         }
     }
@@ -102,9 +102,7 @@ fn rotate64(y: usize) -> Vec<usize> {
 /// Assume: 0 at index 64
 fn shift64(y: usize) -> Vec<usize> {
     let mut res = Vec::new();
-    for _ in 64 - y..64 {
-        res.push(64);
-    }
+    res.extend(std::iter::repeat(64).take(64 - y));
     for i in 0..64 - y {
         res.push(i);
     }
@@ -333,13 +331,13 @@ pub fn sha512_circuit<F: RichField + Extendable<D>, const D: usize>(
 
     // init states
     let mut state = Vec::new();
-    for i in 0..8 {
-        state.push(builder.constant_biguint(&BigUint::from_u64(H512_512[i]).unwrap()));
+    for item in &H512_512 {
+        state.push(builder.constant_biguint(&BigUint::from_u64(*item).unwrap()));
     }
 
     let mut k512 = Vec::new();
-    for i in 0..80 {
-        k512.push(builder.constant_biguint(&BigUint::from_u64(K64[i]).unwrap()));
+    for item   in &K64 {
+        k512.push(builder.constant_biguint(&BigUint::from_u64(*item).unwrap()));
     }
 
     for blk in 0..block_count {
@@ -358,9 +356,7 @@ pub fn sha512_circuit<F: RichField + Extendable<D>, const D: usize>(
             let u32_0 = builder.le_sum(message[index..index + 32].iter().rev());
             let u32_1 = builder.le_sum(message[index + 32..index + 64].iter().rev());
 
-            let mut u32_targets = Vec::new();
-            u32_targets.push(U32Target(u32_1));
-            u32_targets.push(U32Target(u32_0));
+            let u32_targets = vec![U32Target(u32_1), U32Target(u32_0) ];
             let big_int = BigUintTarget { limbs: u32_targets };
 
             x.push(big_int);
@@ -427,9 +423,9 @@ pub fn sha512_circuit<F: RichField + Extendable<D>, const D: usize>(
         state[7] = add_biguint_2limbs(builder, &state[7], &h);
     }
 
-    for i in 0..8 {
+    for state_item in state.iter().take(8){
         for j in (0..2).rev() {
-            let bit_targets = builder.split_le_base::<2>(state[i].get_limb(j).0, 32);
+            let bit_targets = builder.split_le_base::<2>(state_item.get_limb(j).0, 32);
             for k in (0..32).rev() {
                 digest.push(BoolTarget::new_unsafe(bit_targets[k]));
             }

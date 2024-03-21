@@ -72,3 +72,4 @@ path = "./src/bin/prove_current_block.rs"
 name = "prove_prev_epoch_block"
 path = "./src/bin/prove_prev_epoch_block.rs"
 
+

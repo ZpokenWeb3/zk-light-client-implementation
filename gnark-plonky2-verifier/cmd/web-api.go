@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"bytes"
@@ -8,12 +8,20 @@ import (
 	"github.com/consensys/gnark/constraint"
 	"github.com/consensys/gnark/frontend"
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/cobra"
 	"github.com/wormhole-foundation/example-near-light-client/types"
 	"github.com/wormhole-foundation/example-near-light-client/variables"
 	"github.com/wormhole-foundation/example-near-light-client/verifier"
 	"math/big"
 	"net/http"
 )
+
+// proveCmd represents the proof command
+var proveCmd = &cobra.Command{
+	Use:   "web-api",
+	Short: "runs a web server for proof generation in gnark, and verify it, writing to json file input and hex bytes proof",
+	Run:   runApi,
+}
 
 func healthCheck(c *gin.Context) {
 	response := gin.H{
@@ -102,7 +110,7 @@ type ProofRequest struct {
 	VerifierCircuitData []byte `json:"verifierData"`
 }
 
-func main() {
+func runApi(cmd *cobra.Command, args []string) {
 	path := "api-build"
 	vk, _ := verifier.LoadGroth16VerifierKey(path)
 	r1cs, pk, _ := verifier.LoadGroth16ProverData(path)
@@ -111,4 +119,8 @@ func main() {
 	router.GET("/health", healthCheck)
 	router.POST("/proof", generateProof(r1cs, pk, vk))
 	router.Run("0.0.0.0:8010")
+}
+
+func init() {
+	rootCmd.AddCommand(proveCmd)
 }

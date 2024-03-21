@@ -5,7 +5,7 @@ async function main() {
   const verifierAddress = process.env.VERIFIER;
 
   const NearBlockVerification = await ethers.getContractFactory("NearBlockVerification");
-  const nearBlockVerification = await NearBlockVerification.deploy(verifierAddress);
+  const nearBlockVerification = await NearBlockVerification.deploy();
   await nearBlockVerification.deployed();
   await nearBlockVerification.initialize(verifierAddress);
 

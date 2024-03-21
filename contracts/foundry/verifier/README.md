@@ -74,10 +74,41 @@ $ forge snapshot
 $ anvil
 ```
 
-### Deploy
+### Deploy Verifier contract
 
 ```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+Add to the .env file:
+MAINNET_RPC_URL=<your_mainnet_rpc_url>
+PRIVATE_KEY=<your_private_key>
+
+$ source .env
+$ forge script script/VerifierDeployment.s.sol:VerifierDeploymentScript --fork-url $MAINNET_RPC_URL --private-key $PRIVATE_KEY --broadcast
+
+[⠒] Compiling...
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  Verifier deployed to: 0xC7f2Cf4845C6db0e1a1e91ED41Bcd0FcC1b0E141
+```
+
+### Deploy NearBlockVerification contract
+
+```shell
+Add to the .env file:
+MAINNET_RPC_URL=<your_mainnet_rpc_url>
+PRIVATE_KEY=<your_private_key>
+VERIFIER=<verifier_contract_address>
+
+$ source .env
+$ forge script script/NearBlockVerificationDeployment.s.sol:NearBlockVerificationDeploymentScript --fork-url $MAINNET_RPC_URL --private-key $PRIVATE_KEY --broadcast
+
+[⠒] Compiling...
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  NearBlockVerification deployed to: 0xC7f2Cf4845C6db0e1a1e91ED41Bcd0FcC1b0E141
 ```
 
 ### Cast

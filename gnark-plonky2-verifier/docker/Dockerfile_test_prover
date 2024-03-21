@@ -19,4 +19,4 @@ EXPOSE 8010
 
 # Run
 ENV USE_BIT_DECOMPOSITION_RANGE_CHECK=true
-CMD ["go", "run", "main.go", "web-api", "--dir", "testdata/test_circuit"]
+CMD ["go", "test", "-race", "-vet=off", "./..."]

@@ -24,6 +24,6 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&fBaseDir, "dir", "", "base directory for the proof, common_circuit_data, verifier_only_circuit_data")
+	rootCmd.PersistentFlags().StringVar(&fBaseDir, "dir", "testdata/test_circuit", "base directory for the proof, common_circuit_data, verifier_only_circuit_data")
 	rootCmd.MarkPersistentFlagRequired("dir")
 }

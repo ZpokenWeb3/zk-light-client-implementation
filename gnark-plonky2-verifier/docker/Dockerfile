@@ -17,7 +17,7 @@ RUN go mod download
 COPY . ./
 
 ENV USE_BIT_DECOMPOSITION_RANGE_CHECK=true
-RUN go run compile_build.go
+RUN go run main.go compile --dir testdata/test_circuit
 
 # Optional:
 # To bind to a TCP port, runtime parameters must be supplied to the docker command.
@@ -28,4 +28,4 @@ EXPOSE 8010
 
 # Run
 ENV USE_BIT_DECOMPOSITION_RANGE_CHECK=true
-CMD ["go", "run", "run_api.go"]
+CMD ["go", "run", "main.go", "web-api", "--dir", "testdata/test_circuit"]

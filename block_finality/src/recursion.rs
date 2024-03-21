@@ -164,14 +164,14 @@ pub fn recursive_proofs_reuse_circuit<F: RichField + Extendable<D>, C: GenericCo
 {
     let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::standard_recursion_config());
     let mut pw = PartialWitness::new();
-    for i in 0..proofs.len() {
+    for proof in proofs {
         let proof_with_pis_target = builder.add_virtual_proof_with_pis(&circuit.common);
         let verifier_circuit_target = VerifierCircuitTarget {
             constants_sigmas_cap: builder
                 .add_virtual_cap(circuit.common.config.fri_config.cap_height),
             circuit_digest: builder.add_virtual_hash(),
         };
-        pw.set_proof_with_pis_target(&proof_with_pis_target, &proofs[i]);
+        pw.set_proof_with_pis_target(&proof_with_pis_target, proof);
         pw.set_cap_target(
             &verifier_circuit_target.constants_sigmas_cap,
             &circuit.verifier_only.constants_sigmas_cap,
