@@ -128,7 +128,7 @@ mod permutation_tests {
         let max_value: Fr = Fr::from_str_vartime(
             "21888242871839275222246405745257275088548364400416034343698204186575808495616",
         )
-            .unwrap();
+        .unwrap();
 
         let test_vectors: Vec<([Fr; 4], [Fr; 4])> = vec![
             (
@@ -208,7 +208,7 @@ mod merkle_tree_tests {
 
     fn verify_all_leaves<
         F: RichField + Extendable<D>,
-        C: GenericConfig<D, F=F>,
+        C: GenericConfig<D, F = F>,
         const D: usize,
     >(
         leaves: Vec<Vec<F>>,

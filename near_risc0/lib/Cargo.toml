@@ -1,0 +1,32 @@
+[package]
+name = "lib"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+near-primitives = { version = "0.19.0", optional = true }
+near-crypto = { version = "0.19.0", optional = true }
+near-primitives-core = { version = "0.26.0" }
+serde = { version = "1.0.210" }
+anyhow = { version = "1.0.89" }
+serde_json = { version = "1.0.128" }
+bs58 = { version = "0.4" }
+ed25519-dalek = { version = "2.1.0", default-features = false }
+secp256k1 = { version = "0.27.0", default-features = false }
+derive_more = { version = "0.99.9" }
+thiserror = { version = "1.0.30" }
+primitive-types = { version = "0.10", default-features = false }
+inventory = { version = "0.3.15", optional = true }
+bolero = { version = "0.11.1" }
+reqwest = { version = "0.12.8", optional = true, features = ["json"] }
+tokio = { version = "1.40.0", optional = true, features = ["full"] }
+rand = "0.8.5"
+borsh = "1.5.1"
+alloy-sol-types = "0.8.8"
+
+[features]
+default = ["non-zkvm", "rpc", "protocol_schema"]
+test-utils = ["near-crypto", "near-primitives", ]
+protocol_schema = ["inventory"]
+rpc = ["reqwest", "tokio", "near-primitives", "non-zkvm"]
+non-zkvm = []

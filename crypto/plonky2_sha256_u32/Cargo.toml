@@ -1,24 +1,24 @@
 [package]
 name = "plonky2_sha256_u32"
-description = "Crypto gadgets for Plonky2"
+description = "SHA-256 using U32Targer on Plonky2"
 version = "0.1.0"
 license = "MIT OR Apache-2.0"
 edition = "2021"
 
 [dependencies]
+plonky2.workspace = true
+plonky2_u32.workspace = true
+plonky2_util.workspace = true
+plonky2_ecdsa.workspace = true
+rand.workspace = true
+
 anyhow = { version = "1.0.40", default-features = false }
-plonky2 = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{ git = "https://github.com/staaason/plonky2.git", default-features = false, features = ["gate_testing", "rand_chacha", "std", "parallel"]}
-plonky2_maybe_rayon = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{ git = "https://github.com/staaason/plonky2.git" }
-plonky2_u32 = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{git = "https://github.com/staaason/plonky2-u32.git"}
-plonky2_util = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{ git = "https://github.com/staaason/plonky2.git", default-features = false }
-plonky2_ecdsa = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{git = "https://github.com/staaason/plonky2-ecdsa.git"}
 itertools = "0.10.5"
 num = { version = "0.4.0", default-features = false }
 serde = "1.0.152"
 serde_with = { version = "2.2.0", features = ["hex"] }
 rayon = { version = "1.5.3" }
 hex = { version = "0.4.3" }
-rand = { version = "0.8.5", default-features = false, features = ["getrandom"] }
 
 [dev-dependencies]
 sha2 = { version = "0.10.6" }

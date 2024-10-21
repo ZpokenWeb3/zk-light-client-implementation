@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 
 use num::{BigUint, Integer, One, Zero};
-use plonky2::field::{extension::Extendable, types::Field};
 use plonky2::field::types::PrimeField;
+use plonky2::field::{extension::Extendable, types::Field};
 use plonky2::hash::hash_types::RichField;
 use plonky2::iop::generator::{GeneratedValues, SimpleGenerator};
 use plonky2::iop::target::{BoolTarget, Target};
@@ -119,7 +119,7 @@ pub trait CircuitBuilderNonNative<F: RichField + Extendable<D>, const D: usize> 
 }
 
 impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderNonNative<F, D>
-for CircuitBuilder<F, D>
+    for CircuitBuilder<F, D>
 {
     fn num_nonnative_limbs<FF: Field>() -> usize {
         ceil_div_usize(FF::BITS, 32)
@@ -453,7 +453,7 @@ struct NonNativeAdditionGenerator<F: RichField + Extendable<D>, const D: usize, 
 }
 
 impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerator<F, D>
-for NonNativeAdditionGenerator<F, D, FF>
+    for NonNativeAdditionGenerator<F, D, FF>
 {
     fn id(&self) -> String {
         todo!()
@@ -505,7 +505,7 @@ struct NonNativeMultipleAddsGenerator<F: RichField + Extendable<D>, const D: usi
 }
 
 impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerator<F, D>
-for NonNativeMultipleAddsGenerator<F, D, FF>
+    for NonNativeMultipleAddsGenerator<F, D, FF>
 {
     fn id(&self) -> String {
         todo!()
@@ -561,7 +561,7 @@ struct NonNativeSubtractionGenerator<F: RichField + Extendable<D>, const D: usiz
 }
 
 impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerator<F, D>
-for NonNativeSubtractionGenerator<F, D, FF>
+    for NonNativeSubtractionGenerator<F, D, FF>
 {
     fn id(&self) -> String {
         todo!()
@@ -613,7 +613,7 @@ struct NonNativeMultiplicationGenerator<F: RichField + Extendable<D>, const D: u
 }
 
 impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerator<F, D>
-for NonNativeMultiplicationGenerator<F, D, FF>
+    for NonNativeMultiplicationGenerator<F, D, FF>
 {
     fn id(&self) -> String {
         todo!()
@@ -662,7 +662,7 @@ struct NonNativeInverseGenerator<F: RichField + Extendable<D>, const D: usize, F
 }
 
 impl<F: RichField + Extendable<D>, const D: usize, FF: PrimeField> SimpleGenerator<F, D>
-for NonNativeInverseGenerator<F, D, FF>
+    for NonNativeInverseGenerator<F, D, FF>
 {
     fn dependencies(&self) -> Vec<Target> {
         self.x.value.limbs.iter().map(|&l| l.0).collect()

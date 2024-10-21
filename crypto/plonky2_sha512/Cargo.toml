@@ -1,25 +1,37 @@
 [package]
-	edition = "2021"
-	name    = "plonky2_sha512"
-	version = "0.1.0"
+name = "plonky2_sha512"
+description = "SHA512 gadget for Plonky2"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+edition = "2021"
 
 [dependencies]
-	anyhow.workspace            = true
-	env_logger.workspace        = true
-	itertools.workspace         = true
-	keccak-hash.workspace       = true
-	log.workspace               = true
-	num.workspace               = true
-	plonky2.workspace           = true
-	plonky2_ecdsa.workspace     = true
-	plonky2_field.workspace     = true
-	plonky2_u32.workspace       = true
-	plonky2_util.workspace      = true
-	rand.workspace              = true
-	rand_chacha.workspace       = true
-	rayon.workspace             = true
-	serde.workspace             = true
-	sha2.workspace              = true
-	static_assertions.workspace = true
-	unroll.workspace            = true
+plonky2.workspace = true
+plonky2_util.workspace = true
+plonky2_field.workspace = true
+plonky2_u32.workspace = true
+plonky2_ecdsa.workspace = true
+
+itertools = "0.10.0"
+rayon = "1.5.1"
+serde = { version = "1.0", features = ["derive"] }
+anyhow = "1.0.40"
+log = "0.4.14"
+num = { version = "0.4", features = ["rand"] }
+rand = "0.8.4"
+rand_chacha = "0.3.1"
+unroll = "0.1.5"
+keccak-hash = "0.10.0"
+static_assertions = "1.1.0"
+sha2 = "0.10"
+env_logger = "0.10.0"
+
+[profile.release]
+opt-level = 3
+
+[profile.bench]
+opt-level = 3
+
+[profile.test]
+opt-level = 1
 

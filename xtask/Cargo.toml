@@ -1,0 +1,10 @@
+[package]
+name = "xtask"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+xtaskops = "^0.4.1"
+anyhow = "1"

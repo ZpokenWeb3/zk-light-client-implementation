@@ -11,7 +11,7 @@ async function main() {
 
   if (await nearBlockVerification.paused()) {
     await nearBlockVerification.unpause();
-    await delay(3000);
+    await delay(20000);
   }
 
   let result = await nearBlockVerification.paused();

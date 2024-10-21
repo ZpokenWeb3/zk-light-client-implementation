@@ -1,0 +1,43 @@
+[package]
+name = "host"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+risc0-zkvm = { version = "1.1.2", features = ["default", "std"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+near-primitives-core = { version = "0.26.0" }
+serde = "1.0"
+anyhow = "1.0.89"
+lib = { path = "../lib", default-features = true, features = ["test-utils"] }
+methods = { path = "../methods" }
+tokio = {version = "1.30.0", features = ["full"]}
+bincode = "2.0.0-rc.3"
+axum = "0.7.7"
+async-nats = "0.37.0"
+serde_json = "1.0.128"
+clap = { version = "4.5.20", features = ["derive"] }
+log = "0.4.22"
+futures = "0.3.31"
+thiserror = "1.0.64"
+hex = "0.4.3"
+alloy-sol-types = "0.8.8"
+
+[[bin]]
+name = "epoch"
+path = "./src/bin/epoch.rs"
+
+[[bin]]
+name = "random"
+path = "./src/bin/random.rs"
+
+[[bin]]
+path = "src/bin/random_service.rs"
+name = "random_service"
+
+[[bin]]
+path = "src/bin/proving_server.rs"
+name = "proving_server"
+
+[features]
+cuda = ["risc0-zkvm/cuda"]

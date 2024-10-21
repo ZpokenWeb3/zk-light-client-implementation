@@ -10,10 +10,10 @@ use plonky2::field::types::Field;
 use plonky2::hash::hash_types::RichField;
 use plonky2::hash::poseidon::{PoseidonHash, PoseidonPermutation};
 use plonky2::plonk::config::{GenericConfig, GenericHashOut, Hasher};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::Visitor;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::poseidon_bn128::{GOLDILOCKS_ELEMENTS, permution, RATE};
+use crate::poseidon_bn128::{permution, GOLDILOCKS_ELEMENTS, RATE};
 use crate::utils::{Fr, FrRepr};
 
 /// Configuration using Poseidon BN128 over the Goldilocks field.
@@ -71,8 +71,8 @@ impl<F: RichField> GenericHashOut<F> for PoseidonBN128HashOut<F> {
 
 impl<F: RichField> Serialize for PoseidonBN128HashOut<F> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         // Output the hash as a bigint string.
         let binding = self.value.to_repr();
@@ -85,8 +85,8 @@ impl<F: RichField> Serialize for PoseidonBN128HashOut<F> {
 
 impl<'de, F: RichField> Deserialize<'de> for PoseidonBN128HashOut<F> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         struct PoseidonBN128HashOutVisitor;
 
@@ -98,8 +98,8 @@ impl<'de, F: RichField> Deserialize<'de> for PoseidonBN128HashOut<F> {
             }
 
             fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-                where
-                    E: Error,
+            where
+                E: Error,
             {
                 Ok(v.to_string())
             }
@@ -216,7 +216,7 @@ pub mod tests {
         let fr = Fr::from_str_vartime(
             "11575173631114898451293296430061690731976535592475236587664058405912382527658",
         )
-            .unwrap();
+        .unwrap();
         let hash = PoseidonBN128HashOut::<F> {
             value: fr,
             _phantom: PhantomData,
@@ -233,7 +233,7 @@ pub mod tests {
         let fr = Fr::from_str_vartime(
             "11575173631114898451293296430061690731976535592475236587664058405912382527658",
         )
-            .unwrap();
+        .unwrap();
         let hash = PoseidonBN128HashOut::<GoldilocksField> {
             value: fr,
             _phantom: PhantomData,

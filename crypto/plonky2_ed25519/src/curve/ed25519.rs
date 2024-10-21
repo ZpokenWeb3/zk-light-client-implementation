@@ -77,8 +77,8 @@ mod tests {
     use plonky2::field::types::Field;
 
     use crate::curve::curve_types::{AffinePoint, Curve};
-    use crate::curve::ed25519::Ed25519;
     use crate::curve::ed25519::mul_naive;
+    use crate::curve::ed25519::Ed25519;
     use crate::field::ed25519_scalar::Ed25519Scalar;
 
     #[test]

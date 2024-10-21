@@ -33,7 +33,7 @@ async function main() {
 
   await nearBlockVerification.verifyAndSaveProof(inputs, proof);
 
-  await delay(10000);
+  await delay(20000);
 
   let result = await nearBlockVerification.isProofed(inputs.slice(2, 4));
   console.log("nearBlockVerification.isProofed: ", result);
@@ -46,7 +46,7 @@ async function main() {
   let compressedProof = await verifier.compressProof(proof);
   await nearBlockVerification.verifyAndSaveCompressedProof(inputs, compressedProof);
 
-  await delay(10000);
+  await delay(20000);
 
   console.log("Successfully completed!!");
 }

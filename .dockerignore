@@ -1,7 +1,8 @@
 .git
 .github
+contracts
 data
 database
-hardhat
 proofs
 schemes
+script

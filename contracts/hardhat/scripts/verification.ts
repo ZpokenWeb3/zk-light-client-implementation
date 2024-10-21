@@ -30,7 +30,7 @@ async function main() {
   let compressedProof = await verifier.compressProof(proof);
   await nearBlockVerification.verifyAndSaveCompressedProof(inputs, compressedProof);
 
-  await delay(1000);
+  await delay(20000);
 
   let hash = secondHash(inputs);
   console.log("hash: ", hash);

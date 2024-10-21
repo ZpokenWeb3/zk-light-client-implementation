@@ -1,4 +1,3 @@
-target/
 .DS_Store
 .vscode/
 Cargo.lock
@@ -11,3 +10,7 @@ near_state_proofs/vault-contract/target
 
 **/*.db
 **/*.proof
+
+*.profraw
+
+target/

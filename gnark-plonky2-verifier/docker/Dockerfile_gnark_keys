@@ -3,6 +3,6 @@
 FROM alpine:latest
 
 WORKDIR /app
-COPY api-build/ /app
+COPY api-build /app/api-build
 # Copy the pk, vk, contract of the api-build folder into the Docker image
 CMD exit

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/consensys/gnark-crypto/ecc"
 	"github.com/consensys/gnark/backend/groth16"
 	"github.com/consensys/gnark/frontend"
@@ -22,12 +21,10 @@ func compile(cmd *cobra.Command, args []string) {
 	verifierOnlyCircuitData := variables.DeserializeVerifierOnlyCircuitData(
 		types.ReadVerifierOnlyCircuitData(fBaseDir + "/verifier_only_circuit_data.json"),
 	)
-	proofWithPis, err := variables.DeserializeProofWithPublicInputs(
+	proofWithPis, _ := variables.DeserializeProofWithPublicInputs(
 		types.ReadProofWithPublicInputs(fBaseDir + "/proof_with_public_inputs.json"),
 	)
-	if err != nil {
-		fmt.Println("failed to find proof_with_public_inputs file: %w", err)
-	}
+	
 	commonCircuitData := types.ReadCommonCircuitData(fBaseDir + "/common_circuit_data.json")
 
 	circuit := verifier.CircuitFixed{
@@ -39,9 +36,7 @@ func compile(cmd *cobra.Command, args []string) {
 	}
 	var builder frontend.NewBuilder = r1cs.NewBuilder
 	r1cs, _ := frontend.Compile(ecc.BN254.ScalarField(), builder, &circuit)
-	if err != nil {
-		fmt.Println("failed to find proof_with_public_inputs file: %w", err)
-	}
+	
 	pk, vk, _ := groth16.Setup(r1cs)
 
 	_ = verifier.SaveVerifierCircuitGroth("api-build", r1cs, pk, vk)

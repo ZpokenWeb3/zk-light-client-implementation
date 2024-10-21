@@ -1,0 +1,27 @@
+[package]
+name = "risc0-ethereum-contracts"
+description = "Ethereum contracts for RISC Zero applications"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+
+[build-dependencies]
+anyhow = "1.0"
+
+[dependencies]
+alloy = { workspace = true, features = ["sol-types", "contract"] }
+anyhow = { workspace = true }
+risc0-zkvm = { workspace = true }
+
+[dev-dependencies]
+hex = "0.4"
+regex = "1.10"
+tokio = { workspace = true, features = ["macros", "rt"] }
+
+[lib]
+doctest = false
+
+[features]
+default = []

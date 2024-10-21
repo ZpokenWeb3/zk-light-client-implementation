@@ -38,7 +38,7 @@ pub trait CircuitBuilderWindowedMul<F: RichField + Extendable<D>, const D: usize
 }
 
 impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderWindowedMul<F, D>
-for CircuitBuilder<F, D>
+    for CircuitBuilder<F, D>
 {
     fn precompute_window<C: Curve>(
         &mut self,

@@ -23,10 +23,17 @@ services:
       timeout: 10s
       retries: 3
       start_period: 1m
+    environment:
+      - NATS_URL=${NATS_URL}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - NEAR_BLOCK_VERIFIER_CONTRACT=${NEAR_BLOCK_VERIFIER_CONTRACT}
+      - SEPOLIA_RPC=${SEPOLIA_RPC}
+      - NEAR_RPC=${NEAR_RPC}
     ports:
       - '9024:9024'
     volumes:
       - ./proofs:/app/proofs
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       - nats
       - gnark_wrapper
@@ -51,8 +58,12 @@ services:
       restart_policy:
         condition: on-failure
         max_attempts: 2
+    environment:
+      - NATS_URL=${NATS_URL}
+      - NEAR_RPC=${NEAR_RPC}
     volumes:
       - ./proofs:/proofs
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       - nats
     networks:
@@ -73,6 +84,10 @@ services:
         delay: 10s
       restart_policy:
         condition: on-failure
+    environment:
+      - NATS_URL=${NATS_URL}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       - nats
     networks:
@@ -98,13 +113,15 @@ services:
     ports:
       - "4222:4222"
       - "8222:8222"
+    volumes:
+    - /etc/localtime:/etc/localtime:ro
     command: ["--jetstream"]
     hostname: nats-server
     networks:
       - common-network
 
   gnark_wrapper:
-    image: zpokendev/zk-lite-client_gnark-wrapper:latest
+    image: zpokendev/zk-lite-client_gnark-wrapper_prebuilt:latest
     deploy:
       mode: replicated
       replicas: 1
@@ -128,6 +145,8 @@ services:
       start_period: 1m
     ports:
       - '8010:8010'
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     hostname: gnark_wrapper
     networks:
       - common-network

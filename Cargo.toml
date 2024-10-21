@@ -1,73 +1,66 @@
 [workspace]
-	members = [
-		"crypto/plonky2_ed25519",
-		"crypto/plonky2_sha512",
-		"crypto/plonky2_sha256",
-		"block_finality",
-		"crypto/plonky2_sha256_u32",
-		"crypto/plonky2_sha512_u32",
-		"crypto/plonky2_bn128"
-	]
-	[workspace.package]
-		authors     = [ "Zpoken" ]
-		description = "ZKP for NEAR"
-		edition     = "2021"
-		version     = "0.1.0"
+members = [
+  "near_bft_finality",
+  "crypto/plonky2_ed25519",
+  "crypto/plonky2_sha512",
+  "crypto/plonky2_sha256_u32",
+  "crypto/plonky2_bn128"
+, "xtask"]
 
-	[workspace.dependencies]
-		plonky2 = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{git = "https://github.com/staaason/plonky2.git", rev = "9e710742982f1642fa5367bffd596143c021ba26"}
-		plonky2_field = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{git = "https://github.com/staaason/plonky2.git", rev = "9e710742982f1642fa5367bffd596143c021ba26"}
-		plonky2_util = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{git = "https://github.com/staaason/plonky2.git", rev = "9e710742982f1642fa5367bffd596143c021ba26"}
-		plonky2_u32 = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{git = "https://github.com/staaason/plonky2-u32.git"}
-		maybe_rayon = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{git = "https://github.com/staaason/plonky2.git", rev = "9e710742982f1642fa5367bffd596143c021ba26"}
-		plonky2_ecdsa = {git = "https://github.com/zpoken/plonky2", rev = "a5e436079004cc4870313036324267b385089ee6"} #{git = "https://github.com/staaason/plonky2-ecdsa.git"}
+[workspace.package]
+authors     = [ "Zpoken" ]
+description = "ZKP for NEAR"
+edition     = "2021"
+version     = "0.1.0"
 
-		near-crypto = "0.19.0"
-		near-rosetta-rpc    = { git = "https://github.com/near/nearcore"}
-		near-primitives = "0.19.0"
+[workspace.dependencies]
+near-rosetta-rpc    = { git = "https://github.com/near/nearcore" }
+clap                = { version = "4.0.29", features = [ "derive" ] }
+num                 = { version = "0.4", features = [ "rand" ] }
+near-crypto 	      = { version = "0.19.0" }
+near-primitives     = { version = "0.19.0" }
+ed25519-compact     = { version = "2.0.4" }
+anyhow              = { version = "1.0.40" }
+criterion           = { version = "0.3" }
+debug_print         = { version = "1.0" }
+env_logger          = { version = "0.9.0" }
+hex                 = { version = "0.4.3" }
+itertools           = { version = "0.10.5" }
+jemallocator        = { version = "0.5.0" }
+keccak-hash         = { version = "0.8.0" }
+log                 = { version = "0.4.14" }
+rand_chacha         = { version = "0.3.1" }
+rayon               = { version = "1.5.3" }
+serde               = { version = "1.0", features = [ "alloc", "derive", "std" ] }
+serde_with          = { version = "2.2.0", features = [ "hex" ] }
+serde_json          = { version = "1.0" }
+sha2                = { version = "0.10" }
+sha3                = { version = "0.10" }
+static_assertions   = { version = "1.1.0" }
+unroll              = { version = "0.1.5" }
+rand                = { version = "0.8.4" }
 
-		curve25519-dalek    = { git = "https://github.com/EkaterynaKuznetsova/curve25519-dalek", rev = "9f0cf559de8be0edee3af19f46e4804343d90a70"} 
-		ed25519-compact     = "2.0.4"
-
-		anyhow              = "1.0.40"
-		clap                = { version = "4.0.29", features = [ "derive" ] }
-		criterion           = "0.3"
-		debug_print         = "1.0"
-		env_logger          = "0.9.0"
-		hex                 = "0.4.3"
-		itertools           = "0.10.5"
-		jemallocator        = "0.5.0"
-		keccak-hash         = "0.8.0"
-		log                 = "0.4.14"
-		num                 = { version = "0.4", features = [ "rand" ] }
-		rand_chacha         = "0.3.1"
-		rayon               = "1.5.3"
-		serde               = { version = "1.0", features = [ "alloc", "derive", "std" ] }
-		serde_json          = "1.0"
-		serde_with          = { version = "2.2.0", features = [ "hex" ] }
-		sha2                = "0.10"
-		sha3                = "0.10"
-		static_assertions   = "1.1.0"
-		unroll              = "0.1.5"
-
-		rand = "0.8.4"
-
-		plonky2_ed25519     = { path = "crypto/plonky2_ed25519" }
-		plonky2_sha256      = { path = "crypto/plonky2_sha256" }
-		plonky2_sha512      = { path = "crypto/plonky2_sha512" }
-		plonky2_sha256_u32  = { path = "crypto/plonky2_sha256_u32" }
-		plonky2_bn128 		= { path = "crypto/plonky2_bn128"}
-
-
+# Local dependencies
+plonky2             = { git = "https://github.com/wormhole-foundation/plonky2-near", rev = "2244a9d802aa74f15c32ca7f4139959c61126819", features = ["parallel"] }
+plonky2_field       = { git = "https://github.com/wormhole-foundation/plonky2-near", rev = "2244a9d802aa74f15c32ca7f4139959c61126819" }
+plonky2_util        = { git = "https://github.com/wormhole-foundation/plonky2-near", rev = "2244a9d802aa74f15c32ca7f4139959c61126819" }
+plonky2_maybe_rayon = { git = "https://github.com/wormhole-foundation/plonky2-near", rev = "2244a9d802aa74f15c32ca7f4139959c61126819", features = ["parallel"] }
+plonky2_u32         = { path = "crypto/plonky2_u32" }
+plonky2_ecdsa       = { path = "crypto/plonky2_ecdsa" }
+plonky2_ed25519     = { path = "crypto/plonky2_ed25519" }
+plonky2_sha512      = { path = "crypto/plonky2_sha512" }
+plonky2_sha256_u32  = { path = "crypto/plonky2_sha256_u32" }
+plonky2_bn128 	    = { path = "crypto/plonky2_bn128"}
+curve25519-dalek    = { git = "https://github.com/wormhole-foundation/curve25519-dalek", rev = "8ac0b892c7477ea8f023ec81332420fc4faae595" }
 
 [profile.release]
-	opt-level = 3
-	strip = true
-	lto = true
-	codegen-units = 1
+opt-level = 3
+strip = true
+lto = true
+codegen-units = 1
 
 [profile.bench]
-	opt-level = 3
+opt-level = 3
 
 [profile.test]
-	opt-level = 1
+opt-level = 1

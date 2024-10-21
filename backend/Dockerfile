@@ -1,8 +1,11 @@
 FROM node:current-alpine
 
+# Install curl
+RUN apk update && apk add --no-cache curl
+
 WORKDIR /app
 
-COPY package.json yarn.lock .env /app
+COPY package.json yarn.lock /app
 
 RUN yarn install
 
@@ -11,8 +14,6 @@ COPY ./prisma /app/prisma
 COPY ./proofs /app/proofs
 
 RUN yarn db:push
-
-ENV NATS_URL=nats://195.189.60.190:4222
 
 EXPOSE 9024
 CMD yarn start

@@ -124,36 +124,32 @@ mod tests {
     use plonky2::plonk::circuit_data::CircuitConfig;
     use plonky2::plonk::config::{GenericConfig, PoseidonGoldilocksConfig};
     use rand::Rng;
-
+    use ed25519_compact::KeyPair;
+    use rand::random;
     use crate::gadgets::eddsa::{ed25519_circuit, fill_ecdsa_targets};
-
-    pub const SAMPLE_MSG1: &str = "test message";
-    pub const SAMPLE_PK1: [u8; 32] = [
-        59, 106, 39, 188, 206, 182, 164, 45, 98, 163, 168, 208, 42, 111, 13, 115, 101, 50, 21, 119, 29,
-        226, 67, 166, 58, 192, 72, 161, 139, 89, 218, 41,
-    ];
-    pub const SAMPLE_SIG1: [u8; 64] = [
-        104, 196, 204, 44, 176, 120, 225, 128, 47, 67, 245, 210, 247, 65, 201, 66, 34, 159, 217, 32,
-        175, 224, 14, 12, 31, 231, 83, 160, 214, 122, 250, 68, 250, 203, 33, 143, 184, 13, 247, 140,
-        185, 25, 122, 25, 253, 195, 83, 102, 240, 255, 30, 21, 108, 249, 77, 184, 36, 72, 9, 198, 49,
-        12, 68, 8,
-    ];
 
     fn test_eddsa_circuit_with_config(config: CircuitConfig) -> Result<()> {
         const D: usize = 2;
         type C = PoseidonGoldilocksConfig;
         type F = <C as GenericConfig<D>>::F;
 
+	const MSGLEN1: usize = 100;
+
+        let msg1: Vec<u8> = (0..MSGLEN1).map(|_| random::<u8>() as u8).collect();
+        let keys1 = KeyPair::generate();
+        let pk1 = keys1.pk.to_vec();
+        let sig1 = keys1.sk.sign(msg1.clone(), None).to_vec();
+
         let mut pw = PartialWitness::new();
         let mut builder = CircuitBuilder::<F, D>::new(config);
 
-        let targets = ed25519_circuit(&mut builder, SAMPLE_MSG1.len() * 8);
+        let targets = ed25519_circuit(&mut builder, msg1.len() * 8);
 
         fill_ecdsa_targets::<F, D>(
             &mut pw,
-            SAMPLE_MSG1.as_bytes(),
-            SAMPLE_SIG1.as_slice(),
-            SAMPLE_PK1.as_slice(),
+            &msg1,
+            &sig1,
+            &pk1,
             &targets,
         );
 
@@ -168,21 +164,24 @@ mod tests {
         type C = PoseidonGoldilocksConfig;
         type F = <C as GenericConfig<D>>::F;
 
+	const MSGLEN1: usize = 100;
+
+        let msg1: Vec<u8> = (0..MSGLEN1).map(|_| random::<u8>() as u8).collect();
+        let msg2: Vec<u8> = (0..MSGLEN1).map(|_| random::<u8>() as u8).collect();
+        let keys1 = KeyPair::generate();
+        let pk1 = keys1.pk.to_vec();
+        let sig1 = keys1.sk.sign(msg2.clone(), None).to_vec();
+
         let mut pw = PartialWitness::new();
         let mut builder = CircuitBuilder::<F, D>::new(config);
 
-        let targets = ed25519_circuit(&mut builder, SAMPLE_MSG1.len() * 8);
+        let targets = ed25519_circuit(&mut builder, msg1.len() * 8);
 
-        let mut rng = rand::thread_rng();
-        let rnd_idx = rng.gen_range(0..64);
-        let mut sig = SAMPLE_SIG1;
-        let rnd_value = rng.gen_range(1..=255);
-        sig[rnd_idx] += rnd_value;
         fill_ecdsa_targets::<F, D>(
             &mut pw,
-            SAMPLE_MSG1.as_bytes(),
-            sig.as_slice(),
-            SAMPLE_PK1.as_slice(),
+            &msg1,
+            &sig1,
+            &pk1,
             &targets,
         );
 

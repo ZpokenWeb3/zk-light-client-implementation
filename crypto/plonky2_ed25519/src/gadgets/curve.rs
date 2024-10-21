@@ -87,7 +87,7 @@ pub trait CircuitBuilderCurve<F: RichField + Extendable<D>, const D: usize> {
 }
 
 impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderCurve<F, D>
-for CircuitBuilder<F, D>
+    for CircuitBuilder<F, D>
 {
     fn constant_affine_point<C: Curve>(&mut self, point: AffinePoint<C>) -> AffinePointTarget<C> {
         // debug_assert!(!point.zero);
@@ -332,7 +332,7 @@ struct CurvePointDecompressionGenerator<F: RichField + Extendable<D>, const D: u
 }
 
 impl<F: RichField + Extendable<D>, const D: usize, C: Curve> SimpleGenerator<F, D>
-for CurvePointDecompressionGenerator<F, D, C>
+    for CurvePointDecompressionGenerator<F, D, C>
 {
     fn dependencies(&self) -> Vec<Target> {
         self.pv.iter().cloned().map(|l| l.target).collect()

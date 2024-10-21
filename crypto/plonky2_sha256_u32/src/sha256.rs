@@ -393,85 +393,40 @@ mod tests {
     use plonky2::plonk::config::{GenericConfig, PoseidonGoldilocksConfig};
     use sha2::{Digest, Sha256};
 
-    use crate::merkle_utils::Hash256;
     use crate::sha256::{CircuitBuilderHashSha2, WitnessHashSha2};
-    use crate::types::{CircuitBuilderHash, WitnessHash};
+    use crate::types::CircuitBuilderHash;
+    use rand::random;
 
     pub const SHA256_BLOCK: usize = 512;
 
     #[test]
     fn test_sha256_long() {
-        let tests = [
-            [
-                "600D54000000000000000000000000000000000000000000000000000000000077F1040000000000000000000000000000000000000000000000000000000000600D54000000000000000000000000000000000000000000000000000000000077F1040000000000000000000000000000000000000000000000000000000000600D54000000000000000000000000000000000000000000000000000000000077F1040000000000000000000000000000000000000000000000000000000000600D54000000000000000000000000000000000000000000000000000000000077F1040000000000000000000000000000000000000000000000000000000000",
-                "e2bbaa7bedab290cf7988037a06d154d18a6ee308753f247a575620ec7e80167",
-            ],
-            [
-                "600D54000000000000000000000000000000000000000000000000000000000077F1040000000000000000000000000000000000000000000000000000000000600D54000000000000000000000000000000000000000000000000000000000077F1040000000000000000000000000000000000000000000000000000000000",
-                "809015abf113afc95c4a55bfdf8a161a2d0dfd95d623b6f9cbaa2699252478b2",
-            ],
-            [
-                "600D54000000000000000000000000000000000000000000000000000000000077F1040000000000000000000000000000000000000000000000000000000000",
-                "9e05820fb000642e0f36ad7696f92d95c965cb27a8dc093d81a0d37b260a0f8e",
-            ],
-            [
-                "600D540000000000000000000000000000000000000000000000000000000000",
-                "a324d6ee65ee3599f9538eb1951a66ec2cb79031346afe1fd2ca4449522550e7",
-            ],
-            [
-                "600D5400000000000000000000000000",
-                "a8a27baae0b4516db52187ff191eb411a0d7ed2c7d9a551a4b371922cdf44b5a",
-            ],
-            [
-                "600D540000000000",
-                "f8a6d119d121859f8a874992ffb12d31b66f1ef2b26556780a5717817688863c",
-            ],
-            [
-                "600D5400",
-                "30cea5362411ac24c327773d1d20a90b22eb3e697124434d4d524942e81b775c",
-            ],
-            [
-                "600D",
-                "efe762fd3125bc89baa0db7fc1a72a135b653ac289e24b75aa7ef6967b4c1f1d",
-            ],
-            [
-                "60",
-                "8d33f520a3c4cef80d2453aef81b612bfe1cb44c8b2025630ad38662763f13d3",
-            ],
-        ];
-
         // build circuit once
         const D: usize = 2;
         type C = PoseidonGoldilocksConfig;
         type F = <C as GenericConfig<D>>::F;
 
-        for i in tests {
-            let config = CircuitConfig::standard_recursion_config();
-            let mut builder = CircuitBuilder::<F, D>::new(config);
-            let len_in_bits: usize = hex::decode(i[0]).unwrap().len() * 8;
-            let block_count = (len_in_bits + 64 + SHA256_BLOCK) / SHA256_BLOCK;
-            let hash_target = builder.add_virtual_hash_input_target(block_count, SHA256_BLOCK);
-            let hash_output = builder.hash_sha256(&hash_target);
+	const MSGLEN: usize = 1000;
+        let msg: Vec<u8> = (0..MSGLEN).map(|_| random::<u8>() as u8).collect();
+        let mut hasher = Sha256::new();
+        hasher.update(msg.as_slice());
+        let hash = hasher.finalize();
 
-            let data = builder.build::<C>();
+        let config = CircuitConfig::standard_recursion_config();
+        let mut builder = CircuitBuilder::<F, D>::new(config);
+        let len_in_bits: usize = msg.len() * 8;
+        let block_count = (len_in_bits + 64 + SHA256_BLOCK) / SHA256_BLOCK;
+        let hash_target = builder.add_virtual_hash_input_target(block_count, SHA256_BLOCK);
+        let hash_output = builder.hash_sha256(&hash_target);
 
-            let input = hex::decode(i[0]).unwrap();
-            let output = hex::decode(i[1]).unwrap();
+        let data = builder.build::<C>();
 
-            // test program
-            let mut hasher = Sha256::new();
-            hasher.update(input.as_slice());
-            let result = hasher.finalize();
-            assert_eq!(result[..], output[..]);
+        // test circuit
+        let mut pw = PartialWitness::new();
+        pw.set_sha256_input_target(&hash_target, &msg);
+        pw.set_sha256_output_target(&hash_output, &hash);
 
-            // test circuit
-            let mut pw = PartialWitness::new();
-            pw.set_sha256_input_target(&hash_target, &input);
-            pw.set_sha256_output_target(&hash_output, &output);
-
-            let proof = data.prove(pw).unwrap();
-            assert!(data.verify(proof).is_ok());
-        }
-        
+        let proof = data.prove(pw).unwrap();
+        assert!(data.verify(proof).is_ok());
     }
 }

@@ -149,7 +149,7 @@ mod tests {
     use plonky2::plonk::circuit_builder::CircuitBuilder;
     use plonky2::plonk::circuit_data::CircuitConfig;
     use plonky2::plonk::config::{GenericConfig, PoseidonGoldilocksConfig};
-    
+
     #[test]
     fn test_verify_small_merkle_proof() {
         // build circuit once

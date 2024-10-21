@@ -39,14 +39,14 @@ contract NearBlockVerificationTest is Test {
         ];
 
         proof = [
-            6302162678823841200396915311228777342524310647178952242621209430860606417875,
-            5688874101604422809062392686067769974466336383547871872297604857481113209311,
-            13067201362306888280420276685585448577630319898210624528091944232563639673903,
-            15253040417767205464665745126190612115773771949281934081886164082116687122186,
-            1286287796680172736180296629792415589426353119726353867523801064677953938381,
-            10072443203863058952492408939658944706911871289381911835060263441184101246878,
-            13594152181780533529094098669508003919098231319348108349232488431856536079741,
-            19991156839958621917471713965247457880542796239191147501866226782529365125613
+            20464050077523708468717972999901463052800902965454856493835897293382763588739,
+            13694922551730550929138384526725364508859601738118930886570695639930722819162,
+            9726809289225231716602256724952078482414049108299231512500201224134287347761,
+            21249544778861590267354055219725876020735719608117785239266086615373770363585,
+            14417263863291208274495711595104598247782764532555780227831538548449523215877,
+            5860870952312631648769655284254683182816999556669718506510079433303444943620,
+            16184563987138570578412068350203120407719621917941775542704351564218862151903,
+            4474689186470635657363000670899869682999313450066055139011940476920656162485
         ];
 
         incorrectInputs = [
@@ -114,6 +114,13 @@ contract VerifyTest is NearBlockVerificationTest {
 
         assertTrue(nearBlockVerification.isProofed([inputs[2], inputs[3]]));
     }
+
+    function testVerifyAndSaveProofByOtherUser() public {
+        assertFalse(nearBlockVerification.isProofed([inputs[2], inputs[3]]));
+        vm.prank(user);
+        nearBlockVerification.verifyAndSaveProof(inputs, proof);
+        assertTrue(nearBlockVerification.isProofed([inputs[2], inputs[3]]));
+    }
 }
 
 contract ProofStatusTest is NearBlockVerificationTest {
@@ -121,17 +128,17 @@ contract ProofStatusTest is NearBlockVerificationTest {
         bytes memory unProofedInputHash = hex"00b63708658aa1456ac96ff803915344bdbe264fded3c726a10e8defce103e1b";
         assertFalse(nearBlockVerification.isProofedHash(unProofedInputHash));
 
-        unProofedInputHash = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647";
+        unProofedInputHash = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647"; // Base58: DfnFahXvdFS5Y34rURpmdZ5sQAhaYSdL7DhPsnxNvwBt
         assertFalse(nearBlockVerification.isProofedHash(unProofedInputHash));
     }
 
     function testIsProofedHashWhenInputHashIsProofed() public {
-        bytes memory proofedInputHash = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647";
+        bytes memory proofedInputHash = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647"; // Base58: DfnFahXvdFS5Y34rURpmdZ5sQAhaYSdL7DhPsnxNvwBt
         assertFalse(nearBlockVerification.isProofedHash(proofedInputHash));
 
         nearBlockVerification.verifyAndSaveProof(inputs, proof);
 
-        proofedInputHash = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647";
+        proofedInputHash = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647"; // Base58: DfnFahXvdFS5Y34rURpmdZ5sQAhaYSdL7DhPsnxNvwBt
         assertTrue(nearBlockVerification.isProofedHash(proofedInputHash));
     }
 }
@@ -194,7 +201,7 @@ contract ConvertTest is NearBlockVerificationTest {
         bytes memory proofedInputHashBytes = hex"00b63708658aa1456ac96ff803915344bdbe264fded3c726a10e8defce103e1b";
         assertEq(nearBlockVerification.toHash([inputs[0], inputs[1]]), proofedInputHashBytes);
 
-        proofedInputHashBytes = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647";
+        proofedInputHashBytes = hex"bc3b7ad2c4a1269c8bbc161ee8d9fd3bdd4ee11af49aede8eb8a920e9e344647"; // Base58: DfnFahXvdFS5Y34rURpmdZ5sQAhaYSdL7DhPsnxNvwBt
         assertEq(nearBlockVerification.toHash([inputs[2], inputs[3]]), proofedInputHashBytes);
     }
 }

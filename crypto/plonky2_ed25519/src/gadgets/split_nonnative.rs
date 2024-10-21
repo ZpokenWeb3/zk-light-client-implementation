@@ -32,7 +32,7 @@ pub trait CircuitBuilderSplit<F: RichField + Extendable<D>, const D: usize> {
 }
 
 impl<F: RichField + Extendable<D>, const D: usize> CircuitBuilderSplit<F, D>
-for CircuitBuilder<F, D>
+    for CircuitBuilder<F, D>
 {
     fn split_u32_to_4_bit_limbs(&mut self, val: U32Target) -> Vec<Target> {
         let two_bit_limbs = self.split_le_base::<4>(val.0, 16);

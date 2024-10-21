@@ -17,7 +17,7 @@ async function main() {
 
   await nearBlockVerification.setVerifier(newVerifier.address);
 
-  await delay(3000);
+  await delay(20000);
 
   let result = await nearBlockVerification.getVerifier();
   console.log("nearBlockVerification.getVerifier(): ", result);

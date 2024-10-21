@@ -11,18 +11,23 @@ This is an implementation of a [Plonky2](https://github.com/mir-protocol/plonky2
 
 To compile prover, verifier keys and Solidity verifier contract
 ```
-USE_BIT_DECOMPOSITION_RANGE_CHECK=true go run compile_build.go
+USE_BIT_DECOMPOSITION_RANGE_CHECK=true go run main.go compile --dir testdata/test_circuit
 ```
 
-To test proving 
+To test prover (compiled setup needed)
 ```
-go run test_proof.go
+go test -race -vet=off ./...
+```
+
+To test prover using Dockerfile with compiled setup
+```
+docker build -t gnark-prover-test -f docker/Dockerfile_test_prover .
+docker run gnark-prover-test
 ```
 
 To run web-api with prover
 ```
-USE_BIT_DECOMPOSITION_RANGE_CHECK=true go run compile_build.go
-go run run_api.go
+USE_BIT_DECOMPOSITION_RANGE_CHECK=true go run main.go web-api --dir testdata/test_circuit
 ```
 
 
@@ -31,5 +36,5 @@ go run run_api.go
 
 | Proof System | Compile | Proving  | Verification | Proof size |
 |--------------|---------|----------|--------------|------------|
-| Groth16      | 17 min  | 30 sec   | 0.0011       | 256 bytes  |
-| Plonk        | 17 min  | 2.30 min | 0.0020       | 928 bytes  |
+| Groth16      | 17 min  | 30 sec   | 0.0011 sec   | 256 bytes  |
+| Plonk        | 17 min  | 2.30 min | 0.0020 sec   | 928 bytes  |

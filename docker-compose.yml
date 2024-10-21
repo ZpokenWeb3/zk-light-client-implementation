@@ -5,8 +5,21 @@ services:
     build: ./backend
     ports:
       - '9024:9024'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9024/health"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
+      start_period: 1m
     volumes:
       - ./proofs:/app/proofs
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - NATS_URL=${NATS_URL}
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - NEAR_BLOCK_VERIFIER_CONTRACT=${NEAR_BLOCK_VERIFIER_CONTRACT}
+      - SEPOLIA_RPC=${SEPOLIA_RPC}
+      - NEAR_RPC=${NEAR_RPC}
     depends_on:
       - nats
       - gnark_wrapper
@@ -20,6 +33,10 @@ services:
       dockerfile: ./docker/Dockerfile
     volumes:
       - ./proofs:/proofs
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - NATS_URL=${NATS_URL}
+      - NEAR_RPC=${NEAR_RPC}
     depends_on:
       - nats
     networks:
@@ -30,13 +47,19 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile.prover
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     depends_on:
       - nats
+    environment:
+      - NATS_URL=${NATS_URL}
     networks:
       - common-network
 
   nats:
     image: nats:latest
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     expose:
       - "4222"
     ports:
@@ -48,10 +71,12 @@ services:
       - common-network
 
   gnark_wrapper:
-    image: zpokendev/zk-lite-client_gnark-wrapper:latest
+    image: zpokendev/zk-lite-client_gnark-wrapper_prebuilt:latest
     build:
       context: ./gnark-plonky2-verifier/
       dockerfile: ./docker/Dockerfile_gnark_prebuilt
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - '8010:8010'
     healthcheck:

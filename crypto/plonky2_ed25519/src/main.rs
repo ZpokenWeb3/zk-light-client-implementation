@@ -8,9 +8,9 @@ use plonky2::hash::hash_types::RichField;
 use plonky2::iop::witness::PartialWitness;
 use plonky2::plonk::circuit_builder::CircuitBuilder;
 use plonky2::plonk::circuit_data::{CircuitConfig, CommonCircuitData, VerifierOnlyCircuitData};
+use plonky2::plonk::config::PoseidonGoldilocksConfig;
 use plonky2::plonk::config::{GenericConfig, Hasher};
 use plonky2::plonk::proof::ProofWithPublicInputs;
-use plonky2::plonk::config::PoseidonGoldilocksConfig;
 
 use plonky2::util::timing::TimingTree;
 
@@ -22,13 +22,13 @@ type ProofTuple<F, C, const D: usize> = (
     CommonCircuitData<F, D>,
 );
 
-fn prove_ed25519<F: RichField + Extendable<D>, C: GenericConfig<D, F=F>, const D: usize>(
+fn prove_ed25519<F: RichField + Extendable<D>, C: GenericConfig<D, F = F>, const D: usize>(
     msg: &[u8],
     sigv: &[u8],
     pkv: &[u8],
 ) -> Result<ProofTuple<F, C, D>>
-    where
-        [(); C::Hasher::HASH_SIZE]:,
+where
+    [(); C::Hasher::HASH_SIZE]:,
 {
     let mut builder = CircuitBuilder::<F, D>::new(CircuitConfig::wide_ecc_config());
 
@@ -67,17 +67,46 @@ fn main() -> Result<()> {
 
     let sample_msg1 = "test message".to_string();
     let sample_pk1 = [
-        59, 106, 39, 188, 206, 182, 164, 45, 98, 163, 168, 208, 42, 111, 13, 115, 101, 50, 21, 119, 29,
-        226, 67, 166, 58, 192, 72, 161, 139, 89, 218, 41,
-    ].to_vec();
+        59, 106, 39, 188, 206, 182, 164, 45, 98, 163, 168, 208, 42, 111, 13, 115, 101, 50, 21, 119,
+        29, 226, 67, 166, 58, 192, 72, 161, 139, 89, 218, 41,
+    ]
+    .to_vec();
     let sample_sig1 = [
-        104, 196, 204, 44, 176, 120, 225, 128, 47, 67, 245, 210, 247, 65, 201, 66, 34, 159, 217, 32,
-        175, 224, 14, 12, 31, 231, 83, 160, 214, 122, 250, 68, 250, 203, 33, 143, 184, 13, 247, 140,
-        185, 25, 122, 25, 253, 195, 83, 102, 240, 255, 30, 21, 108, 249, 77, 184, 36, 72, 9, 198, 49,
-        12, 68, 8,
-    ].to_vec();
+        104, 196, 204, 44, 176, 120, 225, 128, 47, 67, 245, 210, 247, 65, 201, 66, 34, 159, 217,
+        32, 175, 224, 14, 12, 31, 231, 83, 160, 214, 122, 250, 68, 250, 203, 33, 143, 184, 13, 247,
+        140, 185, 25, 122, 25, 253, 195, 83, 102, 240, 255, 30, 21, 108, 249, 77, 184, 36, 72, 9,
+        198, 49, 12, 68, 8,
+    ]
+    .to_vec();
 
     prove_ed25519::<F, C, D>(sample_msg1.as_bytes(), &sample_sig1, &sample_pk1)?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod service_tests {
+    use super::*;
+    use plonky2::plonk::{circuit_data, config::PoseidonGoldilocksConfig};
+    use plonky2_field::types::Field;
+    use rand::random;
+    use ed25519_compact::*;
+
+    #[test]
+    fn test_prove_ed25519() -> Result<()> {
+        const D: usize = 2;
+    	type C = PoseidonGoldilocksConfig;
+    	type F = <C as GenericConfig<D>>::F;
+
+	const MSGLEN: usize = 100;
+
+        let msg: Vec<u8> = (0..MSGLEN).map(|_| random::<u8>() as u8).collect();
+        let keys = KeyPair::generate();
+        let pk = keys.pk.to_vec();
+        let sig = keys.sk.sign(msg.clone(), None).to_vec();
+
+    	prove_ed25519::<F, C, D>(&msg, &sig, &pk)?;
+
+    	Ok(())
+    }
 }

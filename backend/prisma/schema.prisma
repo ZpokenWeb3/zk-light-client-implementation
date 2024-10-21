@@ -16,9 +16,8 @@ model BlockProof {
   height    Int
   timestamp String
   status   String
-  hexInput String
-  previousEpochHash String
-  nextBlockHash String
+  previousEpochStartHash String
+  previousEpochEndHash String
   dateCreate String
 }
 

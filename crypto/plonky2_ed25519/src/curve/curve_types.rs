@@ -165,7 +165,7 @@ impl<C: Curve> ProjectivePoint<C> {
         let Self { x, y, z } = *self;
         z.is_zero()
             || y.square() * z.square()
-            == x.square() * z.square() + z.square().square() + x.square() * y.square() * C::D
+                == x.square() * z.square() + z.square().square() + x.square() * y.square() * C::D
     }
 
     pub fn to_affine(&self) -> AffinePoint<C> {

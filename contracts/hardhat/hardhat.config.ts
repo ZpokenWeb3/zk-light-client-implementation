@@ -14,7 +14,11 @@ export default {
 //       },
     },
     goerli: {
-      url: 'https://rpc.ankr.com/eth_goerli',
+      url: 'https://gateway.tenderly.co/public/goerli',
+      accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    sepolia: {
+      url: 'https://ethereum-sepolia-rpc.publicnode.com',
       accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
   },

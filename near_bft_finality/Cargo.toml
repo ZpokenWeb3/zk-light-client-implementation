@@ -1,0 +1,66 @@
+[package]
+name = "near_bft_finality"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+plonky2.workspace = true
+plonky2_ecdsa.workspace = true
+plonky2_util.workspace = true
+plonky2_field.workspace = true
+plonky2_u32.workspace = true
+plonky2_sha512.workspace = true
+plonky2_ed25519.workspace = true
+plonky2_sha256_u32.workspace = true
+plonky2_bn128.workspace = true
+
+anyhow.workspace = true
+hex.workspace = true
+keccak-hash.workspace = true
+itertools.workspace = true
+log.workspace = true
+sha2.workspace = true
+env_logger.workspace = true
+rand.workspace = true
+rayon.workspace = true
+rand_chacha.workspace = true
+unroll.workspace = true
+static_assertions.workspace = true
+curve25519-dalek.workspace = true
+ed25519-compact.workspace = true
+near-crypto.workspace = true
+near-primitives.workspace = true
+num.workspace = true
+
+ff = { package = "ff", version = "0.13", features = ["derive"] }
+derive_more = "0.99.9"
+serde_derive = "1.0.9"
+
+serde = { version = "1.0.136", features = ["alloc", "derive", "rc"] }
+serde_json = "1.0.68"
+serde_repr = "0.1.8"
+serde_with = { version = "3.0", features = ["base64"] }
+bs58 = { version = "0.4.0", features = ["check"] }
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+nats = "0.24.1"
+async-nats = "0.33.0"
+futures = "0.3.30"
+
+[features]
+default = ["parallel", "std", "timing"]
+parallel = ["plonky2/parallel"]
+std = ["plonky2/std", "itertools/use_std"]
+timing = ["plonky2/timing"]
+
+[[bin]]
+name = "prove_block"
+path = "./src/bin/prove_block.rs"
+
+[[bin]]
+name = "prove_epoch"
+path = "./src/bin/prove_epoch.rs"
+
+[[bin]]
+name = "prove_random"
+path = "./src/bin/prove_random.rs"

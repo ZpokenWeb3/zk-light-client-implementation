@@ -2,11 +2,10 @@ use core::fmt::{self, Debug, Display, Formatter};
 use core::hash::{Hash, Hasher};
 use core::iter::{Product, Sum};
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-use std::vec::Vec;
 
 use itertools::Itertools;
-use num::{Integer, One};
 use num::bigint::BigUint;
+use num::{Integer, One};
 use plonky2::field::types::{Field, PrimeField, Sample};
 use serde::{Deserialize, Serialize};
 
@@ -65,8 +64,8 @@ impl Debug for Ed25519Scalar {
 impl Sample for Ed25519Scalar {
     #[inline]
     fn sample<R>(rng: &mut R) -> Self
-        where
-            R: rand::RngCore + ?Sized,
+    where
+        R: rand::RngCore + ?Sized,
     {
         use num::bigint::RandBigInt;
         Self::from_noncanonical_biguint(rng.gen_biguint_below(&Self::order()))
@@ -195,7 +194,7 @@ impl AddAssign for Ed25519Scalar {
 }
 
 impl Sum for Ed25519Scalar {
-    fn sum<I: Iterator<Item=Self>>(iter: I) -> Self {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::ZERO, |acc, x| acc + x)
     }
 }
@@ -237,7 +236,7 @@ impl MulAssign for Ed25519Scalar {
 
 impl Product for Ed25519Scalar {
     #[inline]
-    fn product<I: Iterator<Item=Self>>(iter: I) -> Self {
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.reduce(|acc, x| acc * x).unwrap_or(Self::ONE)
     }
 }

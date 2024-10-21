@@ -1,12 +1,12 @@
 FROM rust:latest as builder
-ARG NIGHTLY_VERSION=2023-10-24
+ARG NIGHTLY_VERSION=2024-03-24
 
 RUN rustup toolchain install nightly-${NIGHTLY_VERSION}
 
 WORKDIR .
 
-# Copy the Cargo.toml and Cargo.lock files to the working directory
-COPY Cargo.toml Cargo.lock ./
+# Copy the Cargo.toml files to the working directory
+COPY Cargo.toml ./
 
 # Copy the source code into the container
 COPY ./block_finality ./block_finality
